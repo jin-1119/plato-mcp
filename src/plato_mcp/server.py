@@ -13,12 +13,23 @@ Two run modes, selected by the `MCP_TRANSPORT` env var:
 import os
 
 from mcp.server.mcpserver import MCPServer
+from mcp.types import Icon
 
 from plato_mcp.tools import register_all
+
+# Generic graduation-cap icon (not PNU's actual logo) as an inline data URI --
+# no image asset exists in this repo, and Smithery's Icon field takes a
+# http(s):// or data: URI.
+_ICON_DATA_URI = (
+    "data:image/svg+xml;base64,"
+    "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMiIgZmlsbD0iIzFCNEI4RiIvPgogIDxwYXRoIGQ9Ik0zMiAxNCBMNTQgMjQgTDMyIDM0IEwxMCAyNCBaIiBmaWxsPSIjRkZGRkZGIi8+CiAgPHBhdGggZD0iTTE4IDI4IFY0MiBDMTggNDYgMjYgNTAgMzIgNTAgQzM4IDUwIDQ2IDQ2IDQ2IDQyIFYyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+Cg=="
+)
 
 mcp = MCPServer(
     name="plato-mcp",
     description="Unofficial MCP server for PLATO (plato.pusan.ac.kr), PNU's Moodle-based LMS.",
+    website_url="https://github.com/jin-1119/plato_mcp",
+    icons=[Icon(src=_ICON_DATA_URI, mime_type="image/svg+xml", sizes=["64x64"])],
 )
 
 register_all(mcp)
