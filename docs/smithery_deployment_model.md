@@ -444,6 +444,34 @@ the concrete deploy/publish/verify work, and
 `docs/smithery_publish_guide.md` (#73) for the non-technical step-by-step
 version of the same process.
 
+## Addendum (issue #77): Smithery quality score, and why Optional Config caps at 10/25
+
+A Smithery quality-score review (38/100) found most of the deficit was
+missing metadata the SDK already supports and never something structural:
+server-level `website_url`/`icons` (unset), per-tool `annotations`
+(`ToolAnnotations`, only set on the two write tools), and parameter
+`description`s (present on almost none of them). All three were fixed by
+adding the missing SDK fields -- see `server.py`, `tool_annotations.py`,
+and `tools/*.py`.
+
+**Optional Config is a structural exception, not a bug.** Smithery's
+"Configuration UX" category splits "Config Schema" (10pt) and "Optional
+Config" (15pt) as mutually exclusive: any field listed in
+`configSchema.required` forfeits the Optional Config points entirely, in
+exchange for the Config Schema points. `pnu_id`/`pnu_password` are real
+login credentials that every tool call needs -- there's no way to make
+them optional in this config schema and have the server still work, so
+`required: ["pnu_id", "pnu_password"]` is correct as-is and **10/25 is the
+ceiling for this authentication model**, not a bug to fix.
+
+Getting the other 15pt would mean moving credentials out of `configSchema`
+entirely and issuing sessions through a runtime login tool instead (config
+carries no required fields; a `login` tool call establishes the PLATO
+session). That's a genuine redesign of how auth is wired through
+`context.py`/`config.py`, out of scope for #77 -- tracked as a follow-up
+idea, not filed as a concrete issue since it would need its own
+cost/benefit look first.
+
 ## Sources
 
 - https://smithery.ai/docs/build/deployments/custom-container
