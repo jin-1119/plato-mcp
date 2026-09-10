@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plato-mcp</title>
+<meta name="description" content="부산대학교 PLATO(Moodle 기반 LMS)를 위한 비공식 MCP 서버. Claude 같은 AI 어시스턴트가 강좌·과제·성적·공지·Q&A를 조회/작성할 수 있게 해줍니다.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-alt: #161b22;
+    --bg-card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent-soft: rgba(88,166,255,0.12);
+    --green: #56d364;
+    --amber: #e3b341;
+    --red: #f85149;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff;
+      --bg-alt: #f6f8fa;
+      --bg-card: #f6f8fa;
+      --border: #d0d7de;
+      --text: #1f2328;
+      --text-dim: #57606a;
+      --accent: #0969da;
+      --accent-soft: rgba(9,105,218,0.08);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre { font-family: var(--mono); }
+  code {
+    background: var(--accent-soft);
+    padding: .15em .4em;
+    border-radius: 5px;
+    font-size: .88em;
+  }
+  pre {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+  pre code { background: none; padding: 0; }
+
+  header.topnav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .topnav-inner .brand {
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.02rem;
+  }
+  .topnav-inner .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .topnav-inner nav { display: flex; gap: 18px; font-size: .92rem; flex-wrap: wrap; }
+  .topnav-inner nav a { color: var(--text-dim); }
+  .topnav-inner nav a:hover { color: var(--accent); text-decoration: none; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  section.hero {
+    padding: 72px 0 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+  .badge {
+    font-size: .72rem;
+    font-family: var(--mono);
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .badge.unofficial { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--border)); }
+  .badge.wip { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, var(--border)); }
+
+  h1.title { font-size: 2.3rem; margin: 0 0 14px; letter-spacing: -0.01em; }
+  h1.title .mono { font-family: var(--mono); color: var(--accent); }
+  p.lede { font-size: 1.12rem; color: var(--text-dim); max-width: 640px; margin: 0 0 30px; }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: .92rem;
+    border: 1px solid var(--border);
+  }
+  .btn.primary { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .btn.primary:hover { opacity: .88; text-decoration: none; }
+  .btn.ghost { color: var(--text); }
+  .btn.ghost:hover { border-color: var(--accent); text-decoration: none; }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  section h2 {
+    font-size: 1.5rem;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  section h2 .num { font-family: var(--mono); color: var(--accent); font-size: 1rem; }
+  section > p.section-sub { color: var(--text-dim); margin: 0 0 32px; max-width: 640px; }
+
+  .tool-groups { display: grid; gap: 22px; }
+  .tool-group h3 {
+    font-size: .95rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-dim);
+    margin: 0 0 12px;
+  }
+  .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .tool-card .name {
+    font-family: var(--mono);
+    font-size: .88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .tool-card .write-tag {
+    font-size: .65rem;
+    font-family: var(--sans);
+    background: color-mix(in srgb, var(--amber) 18%, transparent);
+    color: var(--amber);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tool-card .desc { color: var(--text-dim); font-size: .85rem; }
+
+  .install-tabs { display: grid; gap: 20px; }
+  .install-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .install-card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .install-card p.hint { color: var(--text-dim); font-size: .9rem; margin: 0 0 14px; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 34px;
+    margin-bottom: 16px;
+  }
+  .steps li:last-child { margin-bottom: 0; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 1px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .callout {
+    background: color-mix(in srgb, var(--red) 8%, var(--bg-card));
+    border: 1px solid color-mix(in srgb, var(--red) 35%, var(--border));
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 18px;
+    font-size: .9rem;
+  }
+  .callout strong { color: var(--red); }
+
+  .workflow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .flow-step {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: .88rem;
+  }
+  .flow-step .k { font-family: var(--mono); color: var(--accent); font-size: .78rem; display: block; margin-bottom: 6px; }
+
+  table.spec {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+    margin: 18px 0;
+  }
+  table.spec th, table.spec td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.spec th { background: var(--bg-alt); color: var(--text-dim); font-weight: 600; width: 30%; }
+
+  .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .link-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: .88rem;
+  }
+  .link-card .t { font-weight: 600; display: block; margin-bottom: 2px; }
+  .link-card .d { color: var(--text-dim); font-size: .82rem; }
+
+  footer {
+    padding: 40px 24px 60px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: .85rem;
+  }
+  footer a { color: var(--text-dim); }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="topnav-inner">
+    <div class="brand"><span class="dot"></span> plato-mcp</div>
+    <nav>
+      <a href="#features">기능</a>
+      <a href="#install">설치</a>
+      <a href="#contributing">기여하기</a>
+      <a href="#workflow">Git/이슈 워크플로우</a>
+      <a href="https://github.com/jin-1119/plato-mcp">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="badges">
+      <span class="badge unofficial">PNU 비공식(unofficial)</span>
+      <span class="badge wip">개발 진행 중</span>
+      <span class="badge">MIT License</span>
+      <span class="badge">Python 3.11+</span>
+    </div>
+    <h1 class="title">부산대 PLATO를 위한<br><span class="mono">MCP</span> 서버</h1>
+    <p class="lede">
+      Claude 같은 AI 어시스턴트가 여러분을 대신해 PLATO(Moodle 기반 LMS)에 로그인하지
+      않고도, 여러분이 이미 접근 권한을 가진 강좌 자료·공지·과제·성적·Q&A를
+      조회·작성·다운로드할 수 있게 해주는 <a href="https://modelcontextprotocol.io/">MCP</a>
+      서버입니다.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#install">설치 방법 보기</a>
+      <a class="btn ghost" href="https://github.com/jin-1119/plato-mcp">소스코드 (GitHub)</a>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2><span class="num">01</span> 제공하는 도구</h2>
+    <p class="section-sub">
+      공식 Moodle webservice API로 동작하는 도구와, <code>ubboard</code>(공지/Q&A) 게시판을
+      본인 로그인 세션으로 스크레이핑하는 도구로 나뉩니다. <span class="badge" style="color:var(--amber)">✏️ 쓰기</span>
+      도구는 실행 전 <code>dry_run</code> 미리보기 확인을 거쳐야만 실제로 전송됩니다.
+    </p>
+
+    <div class="tool-groups">
+      <div class="tool-group">
+        <h3>강좌 · 과제 · 성적 · 일정 · 쪽지 (공식 API)</h3>
+        <div class="tool-grid">
+          <div class="tool-card"><div class="name">list_courses</div><div class="desc">수강 중인 강좌 목록</div></div>
+          <div class="tool-card"><div class="name">get_course_contents</div><div class="desc">강좌 콘텐츠(주차별 자료 등)</div></div>
+          <div class="tool-card"><div class="name">list_assignments</div><div class="desc">과제 목록</div></div>
+          <div class="tool-card"><div class="name">get_assignment_detail</div><div class="desc">과제 상세 및 제출 상태</div></div>
+          <div class="tool-card"><div class="name">submit_assignment <span class="write-tag">write</span></div><div class="desc">과제 제출 (텍스트)</div></div>
+          <div class="tool-card"><div class="name">get_grades</div><div class="desc">성적 조회</div></div>
+          <div class="tool-card"><div class="name">list_calendar_events</div><div class="desc">캘린더 일정</div></div>
+          <div class="tool-card"><div class="name">get_unread_messages</div><div class="desc">안 읽은 쪽지/알림</div></div>
+        </div>
+      </div>
+
+      <div class="tool-group">
+        <h3>공지사항 · Q&A (ubboard, 세션 스크레이핑)</h3>
+        <div class="tool-grid">
+          <div class="tool-card"><div class="name">list_notices</div><div class="desc">공지사항 목록</div></div>
+          <div class="tool-card"><div class="name">get_notice_detail</div><div class="desc">공지사항 상세</div></div>
+          <div class="tool-card"><div class="name">list_qna</div><div class="desc">Q&A 게시글 목록</div></div>
+          <div class="tool-card"><div class="name">get_qna_detail</div><div class="desc">Q&A 게시글 상세</div></div>
+          <div class="tool-card"><div class="name">post_qna_question <span class="write-tag">write</span></div><div class="desc">Q&A 질문 등록</div></div>
+        </div>
+      </div>
+
+      <div class="tool-group">
+        <h3>파일</h3>
+        <div class="tool-grid">
+          <div class="tool-card"><div class="name">download_course_file</div><div class="desc">강좌 첨부파일 다운로드 (원격 실행 시 링크/inline 반환)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2><span class="num">02</span> 설치 / 사용 방법</h2>
+    <p class="section-sub">
+      일반 사용자는 Smithery를 통해 설치하고, 코드를 직접 수정/실행하려는 개발자는
+      로컬 클론 경로를 따라가세요.
+    </p>
+
+    <div class="install-tabs">
+      <div class="install-card">
+        <h3>Smithery로 설치 (일반 사용자)</h3>
+        <p class="hint">Claude Desktop, Claude Code, Claude.ai 커넥터 등에서 바로 추가할 수 있습니다.</p>
+        <ol class="steps">
+          <li><a href="https://smithery.ai/servers/jinyeonggim844/plato-mcp">smithery.ai의 plato-mcp 페이지</a>에 접속합니다.</li>
+          <li><strong>Add to toolbox</strong> 또는 <strong>Install</strong>을 눌러 원하는 클라이언트(Claude Desktop/Code/CLI 등)를 선택합니다.</li>
+          <li>설정 화면에서 PLATO 학번(<code>pnu_id</code>)과 비밀번호(<code>pnu_password</code>)를 입력합니다 — 이 값은 세션 동안만 사용되고 서버 디스크에 저장되지 않습니다.</li>
+          <li>연결 후 <code>list_courses</code> 같은 도구를 호출해 정상 동작하는지 확인합니다.</li>
+        </ol>
+        <div class="callout">
+          <strong>연결 전에 꼭 읽어주세요:</strong> 이 서버는 <a href="https://github.com/jin-1119/plato-mcp#면책조항">면책조항</a>과
+          <a href="https://github.com/jin-1119/plato-mcp#개인정보-안내">개인정보 안내</a>에 설명된 대로,
+          PLATO에서 이미 볼 수 있는 내용(다른 학생 이름이 포함된 Q&A 게시글 등)을 AI와의 대화로 그대로 전달합니다.
+        </div>
+      </div>
+
+      <div class="install-card">
+        <h3>로컬에서 직접 실행 (기여자 · 개발자용)</h3>
+        <p class="hint">코드를 수정하거나 로컬에서 직접 돌려보고 싶을 때. 실제 PLATO 계정 없이도 테스트는 가능합니다(mock 기반).</p>
+        <pre><code>git clone https://github.com/jin-1119/plato-mcp.git
+cd plato-mcp
+pip install -e ".[dev]"
+
+# 단위 테스트 (실계정 불필요)
+pytest
+
+# 린트
+ruff check .
+
+# 로컬 MCP 서버 실행 (stdio, Claude Desktop/Code 연동용)
+python -m plato_mcp.server</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contributing">
+  <div class="wrap">
+    <h2><span class="num">03</span> 기여하기</h2>
+    <p class="section-sub">이슈 하나 = 작업 단위 하나. 모든 변경은 이슈에서 시작해서 PR로 끝납니다.</p>
+
+    <ol class="steps">
+      <li><strong>이슈부터 확인/생성.</strong> 하려는 작업이 이미 <a href="https://github.com/jin-1119/plato-mcp/issues">이슈</a>로 있는지 먼저 찾아보고, 없으면 새로 만듭니다. 버그 수정이든 기능 추가든 문서 수정이든 동일합니다.</li>
+      <li><strong>Fork & 브랜치 생성.</strong> 저장소를 fork한 뒤, <code>main</code>에서 분기해 <code>feature/issue-&lt;번호&gt;-&lt;짧은-설명&gt;</code> 형식의 브랜치를 만듭니다 (버그 수정은 <code>fix/issue-&lt;번호&gt;-...</code>).</li>
+      <li><strong>작업 + 테스트.</strong> 변경 후 <code>pytest</code>와 <code>ruff check .</code>가 모두 통과해야 합니다. 이 저장소는 실제 PLATO 계정을 다루므로, 자격증명이 로그·에러 메시지에 노출되지 않는지 특히 신경써 주세요 (<a href="https://github.com/jin-1119/plato-mcp/blob/main/SECURITY.md">SECURITY.md</a> 참고).</li>
+      <li><strong>PR 생성.</strong> 어떤 이슈를 해결하는지(<code>Closes #N</code>), 무엇을 바꿨는지, 어떻게 검증했는지를 PR 설명에 적습니다.</li>
+      <li><strong>리뷰 & 머지.</strong> CI(lint + test)가 통과하고 리뷰가 끝나면 머지됩니다. 머지 후 브랜치는 삭제됩니다.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="workflow">
+  <div class="wrap">
+    <h2><span class="num">04</span> Git / 이슈 / 브랜치 관리 규칙</h2>
+    <p class="section-sub">
+      이 저장소가 실제로 따르는 운영 규칙입니다. PR을 보내기 전에 한 번 훑어보시면 리뷰가 빨라집니다.
+    </p>
+
+    <div class="workflow-grid">
+      <div class="flow-step"><span class="k">Backlog</span>아직 시작 안 한 아이디어/작업</div>
+      <div class="flow-step"><span class="k">Ready</span>착수 가능, 의존성 해소됨</div>
+      <div class="flow-step"><span class="k">In Progress</span>브랜치 생성 후 실제 작업 중</div>
+      <div class="flow-step"><span class="k">In Review</span>PR 생성, 리뷰/CI 대기</div>
+      <div class="flow-step"><span class="k">Done</span>머지 완료</div>
+    </div>
+
+    <table class="spec">
+      <tr><th>작업 상태의 기준</th><td><a href="https://github.com/users/jin-1119/projects/1">GitHub Project 보드</a>의 <code>Status</code> 필드가 유일한 기준입니다. 라벨이나 코멘트가 아니라 보드 상태를 봅니다.</td></tr>
+      <tr><th>브랜치 네이밍</th><td><code>feature/issue-&lt;N&gt;-&lt;slug&gt;</code>, <code>fix/issue-&lt;N&gt;-&lt;slug&gt;</code>, <code>docs/issue-&lt;N&gt;-&lt;slug&gt;</code> 등 <code>&lt;type&gt;/issue-&lt;번호&gt;-&lt;설명&gt;</code> 형식.</td></tr>
+      <tr><th>기준 브랜치</th><td><code>main</code>에서만 분기합니다. <code>main</code>에는 직접 커밋하지 않고 항상 PR을 통해서만 반영됩니다.</td></tr>
+      <tr><th>이슈 구조</th><td>큰 작업(Phase)은 부모 이슈로 묶고, 실제 작업은 하위 이슈로 쪼갭니다. 부모 이슈는 하위 이슈가 전부 닫히면 자동으로 닫힙니다 — 자세한 예시는 <a href="https://github.com/jin-1119/plato-mcp/blob/main/PLAN.md#phase-및-github-이슈">PLAN.md</a> 참고.</td></tr>
+      <tr><th>커밋</th><td>작고 원자적인 커밋을 선호합니다. 머지는 기본적으로 squash 방식을 사용합니다.</td></tr>
+      <tr><th>CI 게이트</th><td>모든 PR은 머지 전에 <code>pytest tests/unit</code>과 <code>ruff check .</code>를 통과해야 합니다 (GitHub Actions로 자동 실행).</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">05</span> 더 읽어보기</h2>
+    <div class="link-grid">
+      <a class="link-card" href="https://github.com/jin-1119/plato-mcp/blob/main/PLAN.md">
+        <span class="t">PLAN.md</span><span class="d">전체 로드맵과 Phase/이슈 구조</span>
+      </a>
+      <a class="link-card" href="https://github.com/jin-1119/plato-mcp/blob/main/SECURITY.md">
+        <span class="t">SECURITY.md</span><span class="d">자격증명 처리 방식과 보안 모델</span>
+      </a>
+      <a class="link-card" href="https://github.com/jin-1119/plato-mcp/blob/main/docs/smithery_publish_guide.md">
+        <span class="t">smithery_publish_guide.md</span><span class="d">비전공자용 배포 단계별 가이드</span>
+      </a>
+      <a class="link-card" href="https://github.com/jin-1119/plato-mcp/issues">
+        <span class="t">Issues</span><span class="d">진행 중/예정 작업 전체 목록</span>
+      </a>
+      <a class="link-card" href="https://github.com/users/jin-1119/projects/1">
+        <span class="t">Project 보드</span><span class="d">현재 진행 상황(Status 기준)</span>
+      </a>
+      <a class="link-card" href="https://smithery.ai/servers/jinyeonggim844/plato-mcp">
+        <span class="t">Smithery 리스팅</span><span class="d">설치 페이지</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    <a href="https://github.com/jin-1119/plato-mcp">jin-1119/plato-mcp</a> ·
+    MIT License · 부산대학교(PNU) 또는 PLATO와 제휴 관계가 없는 비공식 프로젝트입니다.
+  </p>
+</footer>
+
+</body>
+</html>
