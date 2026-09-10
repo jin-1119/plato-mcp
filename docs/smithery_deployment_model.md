@@ -448,11 +448,12 @@ version of the same process.
 
 A Smithery quality-score review (38/100) found most of the deficit was
 missing metadata the SDK already supports and never something structural:
-server-level `website_url`/`icons` (unset), per-tool `annotations`
+server-level `website_url` (unset), per-tool `annotations`
 (`ToolAnnotations`, only set on the two write tools), and parameter
 `description`s (present on almost none of them). All three were fixed by
 adding the missing SDK fields -- see `server.py`, `tool_annotations.py`,
-and `tools/*.py`.
+and `tools/*.py`. The listing icon is set directly in the Smithery
+dashboard rather than in code.
 
 **Optional Config is a structural exception, not a bug.** Smithery's
 "Configuration UX" category splits "Config Schema" (10pt) and "Optional

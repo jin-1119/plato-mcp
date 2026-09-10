@@ -52,6 +52,8 @@ async def test_every_tool_has_annotations():
 
 
 def test_server_metadata_is_set():
-    """Regression guard for issue #77 (Smithery quality score)."""
+    """Regression guard for issue #77 (Smithery quality score).
+
+    Icon is set directly in the Smithery dashboard, not in code -- see #77.
+    """
     assert mcp.website_url
-    assert mcp.icons
