@@ -1,6 +1,6 @@
 # plato-mcp
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](https://opensource.org/licenses/MIT)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![Status: WIP](https://img.shields.io/badge/status-work%20in%20progress-orange)](./PLAN.md)
 [![Unofficial](https://img.shields.io/badge/PNU-unofficial%20project-red)](#면책조항)
@@ -19,12 +19,47 @@
 > 흘러 들어간다는 차이가 있습니다. 시작하기 전에 아래 [면책조항](#면책조항)과
 > [개인정보 안내](#개인정보-안내)를 반드시 읽어 주세요.
 
-**일반 사용자용 설치 방법은 아직 없습니다.** Smithery 마켓플레이스 공개 배포 작업이
-진행 중입니다 ([#67](https://github.com/jin-1119/plato_mcp/issues/67), 직접 배포해
-보고 싶다면 [`docs/smithery_publish_guide.md`](./docs/smithery_publish_guide.md)의
-비전공자용 단계별 가이드 참고). 지금 당장 코드를 받아 직접 실행/기여하고 싶다면
-아래 [개발 환경 설정](#개발-환경-설정-기여자용)을, 자격증명이 어떻게 다뤄지는지는
-[`SECURITY.md`](./SECURITY.md)를 참고하세요.
+---
+
+## 시작하기
+
+이 프로젝트는 두 부류의 독자를 대상으로 합니다 — **그냥 써보고 싶은 일반 사용자**와
+**코드를 고치거나 기여하고 싶은 개발자**. 아래에서 본인에게 맞는 쪽을 고르세요.
+
+### 일반 사용자 — 그냥 써보고 싶다면
+
+코드를 내려받거나 서버를 직접 실행할 필요가 없습니다. [Smithery
+마켓플레이스](https://smithery.ai/servers/jinyeonggim844/plato-mcp)에 배포되어
+있어, 지원되는 MCP 클라이언트(Claude.ai, Claude Desktop, Claude Code 등)에서 바로
+연결할 수 있습니다.
+
+1. [Smithery의 plato-mcp 페이지](https://smithery.ai/servers/jinyeonggim844/plato-mcp)로 이동합니다.
+2. 사용 중인 MCP 클라이언트에 맞는 설치/연결 버튼을 따라갑니다.
+3. 연결 시 PLATO 학번과 비밀번호를 입력합니다. 이 값은 **서버 디스크에 저장되지
+   않으며**, 요청을 처리하는 동안만 메모리에 존재합니다 — 자세한 내용은
+   [`SECURITY.md`](./SECURITY.md)를 확인하세요.
+4. 연결되면 AI 어시스턴트에게 자연어로 요청하면 됩니다. 예:
+   - "이번 주에 제출해야 할 과제가 뭐가 있어?"
+   - "이번 학기 성적 알려줘"
+   - "OO 과목 3주차 강의자료 다운로드해줘"
+   - "OO 과목 공지사항 최근 것부터 보여줘"
+
+> **시작하기 전에 반드시 아래 [면책조항](#면책조항)과
+> [개인정보 안내](#개인정보-안내)를 읽어 주세요.** 특히 과제 제출·Q&A 등록처럼
+> 되돌릴 수 없는 동작(✏️ 표시)은 실행 전 미리보기 확인을 거치도록 되어 있습니다.
+>
+> Smithery 배포 방식 자체는 아직 조정 중입니다
+> ([#67](https://github.com/jin-1119/plato_mcp/issues/67) — bring-your-own-hosting
+> 방식으로의 이관 논의). 직접 배포해 보고 싶다면
+> [`docs/smithery_publish_guide.md`](./docs/smithery_publish_guide.md)의
+> 비전공자용 단계별 가이드를 참고하세요.
+
+### 개발자 — 코드를 고치거나 기여하고 싶다면
+
+버그 수정, 새 도구 추가, 문서 개선 등 기여를 환영합니다. 이슈/브랜치/PR을 이
+저장소가 실제로 어떻게 운영하는지는 [`CONTRIBUTING.md`](./CONTRIBUTING.md)에
+정리되어 있습니다 — PR을 보내기 전에 먼저 읽어 주세요. 로컬 개발 환경 설정은
+바로 아래 [개발 환경 설정](#개발-환경-설정-기여자용) 섹션을 참고하세요.
 
 ---
 
@@ -151,3 +186,9 @@ pytest
 
 - Lint: `ruff check .`
 - 이슈/보드 운영 방식은 [`PLAN.md`](./PLAN.md#phase-및-github-이슈)를 참고하세요.
+- 기여 방법은 [`CONTRIBUTING.md`](./CONTRIBUTING.md)를 참고하세요.
+
+## 라이선스
+
+[AGPL-3.0](./LICENSE)입니다. 이 서버(또는 수정본)를 네트워크 서비스로 돌려
+다른 사람에게 제공하는 경우, AGPL에 따라 해당 소스코드도 함께 공개해야 합니다.
