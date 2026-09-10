@@ -1,11 +1,15 @@
 """Tool: get_grades (issue #15)."""
 
+from typing import Annotated
+
 from mcp.server.mcpserver import Context
+from pydantic import Field
 
 from plato_mcp.context import get_client, get_userid
 from plato_mcp.errors import MoodleAPIError
 from plato_mcp.models import GradeItem, GradesResult
 from plato_mcp.moodle_client import MoodleClient
+from plato_mcp.tool_annotations import READ_ONLY_TOOL_ANNOTATIONS
 
 
 def get_grades_for(client: MoodleClient, course_id: int) -> GradesResult:
@@ -32,7 +36,12 @@ def get_grades_for(client: MoodleClient, course_id: int) -> GradesResult:
 
 
 def register(mcp) -> None:
-    @mcp.tool()
-    async def get_grades(course_id: int, ctx: Context) -> GradesResult:
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
+    async def get_grades(
+        course_id: Annotated[
+            int, Field(description="PLATO/Moodle numeric course id, e.g. from list_courses.")
+        ],
+        ctx: Context,
+    ) -> GradesResult:
         """Get this account's grade items for a course, if visible."""
         return get_grades_for(get_client(ctx), course_id)

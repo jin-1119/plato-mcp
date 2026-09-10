@@ -6,9 +6,13 @@ been observed (no real Q&A thread exists to reply to), so there's nothing
 verified to build against. See docs/ubboard_structure.md section 6.
 """
 
+from typing import Annotated
+
 from mcp.server.mcpserver import Context
+from pydantic import Field
 
 from plato_mcp.context import get_client, get_ubboard_session
+from plato_mcp.tool_annotations import READ_ONLY_TOOL_ANNOTATIONS
 from plato_mcp.ubboard.models import UbboardPostDetail, UbboardPostSummary
 from plato_mcp.ubboard.scraper import (
     find_board_id,
@@ -25,6 +29,8 @@ from plato_mcp.write_tools import (
     executed_result,
     preview_result,
 )
+
+_COURSE_ID_FIELD = Field(description="PLATO/Moodle numeric course id, e.g. from list_courses.")
 
 ACTION_POST_QNA_QUESTION = "post_qna_question"
 
@@ -54,31 +60,51 @@ def post_qna_question_for(
 
 
 def register(mcp) -> None:
-    @mcp.tool()
-    async def list_notices(course_id: int, ctx: Context) -> list[UbboardPostSummary]:
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
+    async def list_notices(
+        course_id: Annotated[int, _COURSE_ID_FIELD], ctx: Context
+    ) -> list[UbboardPostSummary]:
         """List announcements posted to a course's Notices board."""
         return list_notices_for(get_client(ctx), get_ubboard_session(ctx), course_id)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     async def get_notice_detail(
-        course_id: int, post_id: int, ctx: Context
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        post_id: Annotated[int, Field(description="Notice post id, e.g. from list_notices.")],
+        ctx: Context,
     ) -> UbboardPostDetail:
         """Get the full text of one notice/announcement."""
         return get_notice_detail_for(get_client(ctx), get_ubboard_session(ctx), course_id, post_id)
 
-    @mcp.tool()
-    async def list_qna(course_id: int, ctx: Context) -> list[UbboardPostSummary]:
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
+    async def list_qna(
+        course_id: Annotated[int, _COURSE_ID_FIELD], ctx: Context
+    ) -> list[UbboardPostSummary]:
         """List questions posted to a course's Q&A board."""
         return list_qna_for(get_client(ctx), get_ubboard_session(ctx), course_id)
 
-    @mcp.tool()
-    async def get_qna_detail(course_id: int, post_id: int, ctx: Context) -> UbboardPostDetail:
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
+    async def get_qna_detail(
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        post_id: Annotated[int, Field(description="Q&A post id, e.g. from list_qna.")],
+        ctx: Context,
+    ) -> UbboardPostDetail:
         """Get one Q&A question's text. Does not include replies -- see issue #23."""
         return get_qna_detail_for(get_client(ctx), get_ubboard_session(ctx), course_id, post_id)
 
     @mcp.tool(annotations=WRITE_TOOL_ANNOTATIONS)
     async def post_qna_question(
-        course_id: int, subject: str, content_text: str, ctx: Context, dry_run: bool = True
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        subject: Annotated[str, Field(description="Subject/title of the Q&A question.")],
+        content_text: Annotated[str, Field(description="Body text of the Q&A question.")],
+        ctx: Context,
+        dry_run: Annotated[
+            bool,
+            Field(
+                description="If True (default), only preview without posting. Call again "
+                "with dry_run=False (same parameters) to actually post it."
+            ),
+        ] = True,
     ) -> WriteResult:
         """Post a new question to a course's Q&A board. IRREVERSIBLE and VISIBLE
         to the instructor once dry_run=False (posted as private/secret by default).

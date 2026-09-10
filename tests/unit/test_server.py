@@ -29,3 +29,29 @@ async def test_server_boots_with_expected_tools_registered():
     tools = await mcp.list_tools()
     names = {t.name for t in tools}
     assert names == EXPECTED_TOOLS
+
+
+@pytest.mark.asyncio
+async def test_every_tool_parameter_has_a_description():
+    """Regression guard for issue #77 (Smithery quality score)."""
+    tools = await mcp.list_tools()
+    for tool in tools:
+        properties = (tool.input_schema or {}).get("properties", {})
+        for param_name, schema in properties.items():
+            if param_name == "ctx":
+                continue
+            assert schema.get("description"), f"{tool.name}.{param_name} has no description"
+
+
+@pytest.mark.asyncio
+async def test_every_tool_has_annotations():
+    """Regression guard for issue #77 (Smithery quality score)."""
+    tools = await mcp.list_tools()
+    for tool in tools:
+        assert tool.annotations is not None, f"{tool.name} has no annotations"
+
+
+def test_server_metadata_is_set():
+    """Regression guard for issue #77 (Smithery quality score)."""
+    assert mcp.website_url
+    assert mcp.icons

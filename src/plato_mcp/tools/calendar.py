@@ -2,12 +2,15 @@
 
 import time
 from datetime import UTC, datetime
+from typing import Annotated
 
 from mcp.server.mcpserver import Context
+from pydantic import Field
 
 from plato_mcp.context import get_client
 from plato_mcp.models import CalendarEvent
 from plato_mcp.moodle_client import MoodleClient
+from plato_mcp.tool_annotations import READ_ONLY_TOOL_ANNOTATIONS
 
 DEFAULT_DAYS_AHEAD = 14
 
@@ -29,9 +32,12 @@ def list_calendar_events_for(
 
 
 def register(mcp) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     async def list_calendar_events(
-        ctx: Context, days_ahead: int = DEFAULT_DAYS_AHEAD
+        ctx: Context,
+        days_ahead: Annotated[
+            int, Field(description="How many days ahead of now to include events for.")
+        ] = DEFAULT_DAYS_AHEAD,
     ) -> list[CalendarEvent]:
         """List upcoming calendar events within the next `days_ahead` days."""
         return list_calendar_events_for(get_client(ctx), days_ahead)
