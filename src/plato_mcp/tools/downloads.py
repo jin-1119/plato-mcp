@@ -19,8 +19,10 @@ already do (headers is None under stdio, a Mapping under HTTP):
 """
 
 from collections.abc import Mapping
+from typing import Annotated
 
 from mcp.server.mcpserver import Context
+from pydantic import Field
 
 from plato_mcp.config import load_config
 from plato_mcp.context import get_client
@@ -33,6 +35,7 @@ from plato_mcp.files import (
     fetch_course_file_content_or_link_for,
 )
 from plato_mcp.moodle_client import MoodleClient
+from plato_mcp.tool_annotations import READ_ONLY_TOOL_ANNOTATIONS
 
 
 def download_course_file_tool_for(
@@ -61,9 +64,19 @@ def download_course_file_tool_for(
 
 
 def register(mcp) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     async def download_course_file(
-        ctx: Context, file_url: str, save_path: str | None = None
+        ctx: Context,
+        file_url: Annotated[
+            str, Field(description="The `fileurl` value from get_course_contents.")
+        ],
+        save_path: Annotated[
+            str | None,
+            Field(
+                description="Local filesystem path to save to. Required when running "
+                "locally (stdio); must be omitted when running remotely over HTTP."
+            ),
+        ] = None,
     ) -> DownloadResult | DownloadContentResult | DownloadLinkResult:
         """Download a course file (the `fileurl` from get_course_contents).
 

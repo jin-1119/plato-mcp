@@ -1,8 +1,10 @@
 """Tools: list_assignments, get_assignment_detail (issue #14), submit_assignment (issue #25)."""
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 from mcp.server.mcpserver import Context
+from pydantic import Field
 
 from plato_mcp.context import get_client, get_userid
 from plato_mcp.models import (
@@ -14,6 +16,7 @@ from plato_mcp.models import (
     SubmissionStatus,
 )
 from plato_mcp.moodle_client import MoodleClient
+from plato_mcp.tool_annotations import READ_ONLY_TOOL_ANNOTATIONS
 from plato_mcp.write_tools import (
     WRITE_TOOL_ANNOTATIONS,
     WriteResult,
@@ -23,6 +26,9 @@ from plato_mcp.write_tools import (
 )
 
 ACTION_SUBMIT_ASSIGNMENT = "submit_assignment"
+
+_COURSE_ID_FIELD = Field(description="PLATO/Moodle numeric course id, e.g. from list_courses.")
+_ASSIGNMENT_ID_FIELD = Field(description="Assignment id, e.g. from list_assignments.")
 
 # Moodle's FORMAT_PLAIN -- avoids any HTML-escaping ambiguity for a plain text submission.
 FORMAT_PLAIN = 2
@@ -139,21 +145,43 @@ def submit_assignment_for(
 
 
 def register(mcp) -> None:
-    @mcp.tool()
-    async def list_assignments(course_ids: list[int], ctx: Context) -> list[AssignmentSummary]:
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
+    async def list_assignments(
+        course_ids: Annotated[
+            list[int], Field(description="One or more course ids to list assignments for.")
+        ],
+        ctx: Context,
+    ) -> list[AssignmentSummary]:
         """List assignments across one or more courses, with due dates."""
         return list_assignments_for(get_client(ctx), course_ids)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     async def get_assignment_detail(
-        course_id: int, assignment_id: int, ctx: Context
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        assignment_id: Annotated[int, _ASSIGNMENT_ID_FIELD],
+        ctx: Context,
     ) -> AssignmentDetail:
         """Get one assignment's details and this account's submission status."""
         return get_assignment_detail_for(get_client(ctx), course_id, assignment_id)
 
     @mcp.tool(annotations=WRITE_TOOL_ANNOTATIONS)
     async def submit_assignment(
-        course_id: int, assignment_id: int, text: str, ctx: Context, dry_run: bool = True
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        assignment_id: Annotated[int, _ASSIGNMENT_ID_FIELD],
+        text: Annotated[
+            str,
+            Field(
+                description="Plain-text submission content. File attachments are not supported."
+            ),
+        ],
+        ctx: Context,
+        dry_run: Annotated[
+            bool,
+            Field(
+                description="If True (default), only preview the submission without sending "
+                "it. Call again with dry_run=False (same parameters) to actually submit it."
+            ),
+        ] = True,
     ) -> WriteResult:
         """Submit plain-text content for an assignment. IRREVERSIBLE once dry_run=False.
 
