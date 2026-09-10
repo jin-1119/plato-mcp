@@ -48,9 +48,7 @@
 > [개인정보 안내](#개인정보-안내)를 읽어 주세요.** 특히 과제 제출·Q&A 등록처럼
 > 되돌릴 수 없는 동작(✏️ 표시)은 실행 전 미리보기 확인을 거치도록 되어 있습니다.
 >
-> Smithery 배포 방식 자체는 아직 조정 중입니다
-> ([#67](https://github.com/jin-1119/plato_mcp/issues/67) — bring-your-own-hosting
-> 방식으로의 이관 논의). 직접 배포해 보고 싶다면
+> 직접 배포해 보고 싶다면
 > [`docs/smithery_publish_guide.md`](./docs/smithery_publish_guide.md)의
 > 비전공자용 단계별 가이드를 참고하세요.
 
