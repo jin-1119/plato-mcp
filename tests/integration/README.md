@@ -85,6 +85,18 @@ Run against a real PLATO account with at least one enrolled course.
       `lateness_progress_percent`, `attendance_required`, `time_open`/`time_close`/`time_lateness`
       all matched the raw API response
 
+## Phase 7 checklist (issue #89 -- dashboard/timeline views)
+
+- [x] `core_calendar_get_action_events_by_timesort` — verified live, returned 5 real upcoming
+      `vod` watch-deadline events for course 10502
+- [x] `core_course_get_enrolled_courses_by_timeline_classification` — verified live for
+      `classification="inprogress"` (10 real courses) and `"future"` (0, correctly empty)
+- [x] `gradereport_overview_get_course_grades` — verified live, returned all 5 real courses'
+      overall grades in one call (all ungraded/`"-"` at the time, consistent with `get_grades`)
+- [x] `core_calendar_get_action_events_by_course` — verified live (empty result for course 5968,
+      which does have other real calendar-adjacent data) but deliberately given no tool of its
+      own; see the "why" in `tools/dashboard.py`'s module docstring
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

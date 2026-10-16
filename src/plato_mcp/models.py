@@ -580,3 +580,60 @@ class ActivityCompletionStatus(BaseModel):
     @classmethod
     def _convert_epoch(cls, v: int | None) -> datetime | None:
         return _epoch_to_datetime(v)
+
+
+class ActionEventCourse(BaseModel):
+    """The course an ActionEvent belongs to -- a cut-down view of the much
+    larger course object Moodle embeds inline (which also carries a
+    multi-KB base64 `courseimage` data URI we deliberately drop)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    fullname: str
+    shortname: str
+
+
+class ActionEvent(BaseModel):
+    """One row from `core_calendar_get_action_events_by_timesort` (issue
+    #89) -- Moodle's own "what needs action soon" feed, spanning
+    assignments, vod watch deadlines, etc. in one call instead of combining
+    list_assignments + get_calendar_events client-side."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    name: str
+    eventtype: str
+    activitystr: str | None = Field(
+        default=None, description="Human-readable description of what action is needed."
+    )
+    modulename: str | None = None
+    timestart: datetime | None = None
+    timesort: datetime | None = Field(
+        default=None,
+        description="The timestamp this event is sorted/grouped by -- usually the due date, "
+        "but set far in the future as a sentinel for events with no real deadline.",
+    )
+    overdue: bool = False
+    course: ActionEventCourse | None = None
+
+    @field_validator("timestart", "timesort", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class CourseGradeOverview(BaseModel):
+    """One row from `gradereport_overview_get_course_grades` (issue #89) --
+    one course's overall grade, for all enrolled courses in a single call
+    (vs. `get_grades`'s per-course `gradereport_user_get_grade_items`,
+    which returns individual grade *items* within one course)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    courseid: int
+    grade: str | None = Field(
+        default=None, description="Formatted grade for display, e.g. '85.00' or '-' if ungraded."
+    )
+    rawgrade: float | None = None
