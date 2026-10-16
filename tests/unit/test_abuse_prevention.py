@@ -157,8 +157,10 @@ def test_default_preview_tracker_is_the_one_actually_used_by_the_tools(mocker):
     submit_assignment_for(client, course_id=1, assignment_id=1, text="answer")
 
     # If this were a different tracker instance, this direct check would fail.
+    # file_paths is part of the hashed key as of issue #84 (so a confirm has to
+    # match the same files that were previewed, not just the same text).
     default_preview_tracker.require_previewed(
         "sess-abuse-4",
         "submit_assignment",
-        {"course_id": 1, "assignment_id": 1, "text": "answer"},
+        {"course_id": 1, "assignment_id": 1, "text": "answer", "file_paths": []},
     )

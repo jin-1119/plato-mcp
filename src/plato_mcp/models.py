@@ -7,7 +7,7 @@ tool output focused instead of dumping the raw API response at the LLM.
 
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 
 def _epoch_to_datetime(value: int | None) -> datetime | None:
@@ -95,11 +95,49 @@ class CourseSection(BaseModel):
     modules: list[CourseModule] = Field(default_factory=list)
 
 
+class AssignmentConfig(BaseModel):
+    """One raw row of `mod_assign_get_assignments`'s `configs` array -- a
+    flat (plugin, subtype, name, value) tuple describing one submission or
+    feedback plugin's settings for this assignment. `value` is always a
+    string in the API response, even for booleans/numbers (confirmed live,
+    issue #84 -- e.g. `{"plugin": "file", "subtype": "assignsubmission",
+    "name": "maxsubmissionsizebytes", "value": "1073741824"}`)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    plugin: str
+    subtype: str
+    name: str
+    value: str
+
+
+class SubmissionPluginConfig(BaseModel):
+    """Derived, structured view of one submission plugin's `configs` rows
+    (e.g. the 'file' or 'onlinetext' assignsubmission plugin) -- answers
+    "can I submit a file to this assignment, and under what limits" without
+    the caller having to scan the raw `configs` array themselves.
+
+    `known` distinguishes "Moodle told us this plugin is disabled" from
+    "Moodle's response didn't include config rows for this plugin at all"
+    (e.g. an older cached response, or a Moodle version/permission that
+    omits `configs`) -- callers should fail closed on an explicit disable
+    but not necessarily on missing information. `enabled` defaults to
+    False either way since it's the safe default for display purposes."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    known: bool = False
+    enabled: bool = False
+    max_files: int | None = None
+    max_size_bytes: int | None = None
+    allowed_extensions: list[str] = Field(default_factory=list)
+
+
 class AssignmentSummary(BaseModel):
     """Schema verified against Moodle 4.5's mod_assign/externallib.php source
-    (PLATO runs 4.5.13) -- NOT yet verified against a live response, since no
-    course in the test account has a real assignment. Re-check field names
-    against a real payload once one exists (see tests/integration/README.md).
+    (PLATO runs 4.5.13), and -- as of issue #84 -- against a real live
+    response (course 5968's "중간고사 전 과제", the first real assignment to
+    ever exist on the test account).
     """
 
     model_config = ConfigDict(extra="ignore")
@@ -128,6 +166,11 @@ class AssignmentSummary(BaseModel):
     teamsubmission: bool | None = None
     requireallteammemberssubmit: bool | None = None
     teamsubmissiongroupingid: int | None = None
+    configs: list[AssignmentConfig] = Field(
+        default_factory=list,
+        description="Raw submission/feedback plugin settings. Prefer "
+        "file_submission/onlinetext_submission over reading this directly.",
+    )
 
     @field_validator(
         "duedate", "allowsubmissionsfromdate", "cutoffdate", "gradingduedate", mode="before"
@@ -140,6 +183,37 @@ class AssignmentSummary(BaseModel):
     @classmethod
     def _convert_int_bool(cls, v: int | None) -> bool | None:
         return None if v is None else bool(v)
+
+    def _submission_plugin_config(self, plugin: str) -> SubmissionPluginConfig:
+        rows = [c for c in self.configs if c.subtype == "assignsubmission" and c.plugin == plugin]
+        values = {c.name: c.value for c in rows}
+        raw_types = values.get("filetypeslist", "")
+        extensions = [ext.strip() for ext in raw_types.split(",") if ext.strip()]
+        max_files = values.get("maxfilesubmissions")
+        max_size = values.get("maxsubmissionsizebytes")
+        return SubmissionPluginConfig(
+            known=bool(rows),
+            enabled=values.get("enabled") == "1",
+            max_files=int(max_files) if max_files else None,
+            max_size_bytes=int(max_size) if max_size else None,
+            allowed_extensions=extensions,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def file_submission(self) -> SubmissionPluginConfig:
+        """Whether/how this assignment accepts file attachments. Surfaced
+        as a computed field (not just a raw `configs` scan) so an AI caller
+        can tell ahead of time whether submit_assignment's file_paths
+        argument will be accepted, and under what limits -- the gap that
+        prompted issue #84 in the first place."""
+        return self._submission_plugin_config("file")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def onlinetext_submission(self) -> SubmissionPluginConfig:
+        """Whether this assignment accepts plain-text online submissions."""
+        return self._submission_plugin_config("onlinetext")
 
 
 class PluginEditorField(BaseModel):
