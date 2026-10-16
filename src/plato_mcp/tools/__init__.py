@@ -5,6 +5,7 @@ from . import (
     courses,
     dashboard,
     downloads,
+    forum,
     grades,
     messages,
     notices_qna,
@@ -23,3 +24,4 @@ def register_all(mcp) -> None:
     completion.register(mcp)
     dashboard.register(mcp)
     quiz.register(mcp)
+    forum.register(mcp)

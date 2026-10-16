@@ -83,6 +83,9 @@
 - `get_courses_by_timeline` — 진행 중/예정/종료 강좌 필터링
 - `get_grades_overview` — 전체 강좌 종합 성적 한 번에 조회
 - `list_quizzes` / `get_quiz_attempts` / `get_quiz_best_grade` — 퀴즈 조회 (응시 기능은 미지원)
+- `list_forums` / `get_forum_discussions` / `get_discussion_posts` — 표준 Moodle 포럼 조회
+  (PLATO 자체 공지/Q&A인 `ubboard`와는 다른 모듈)
+- `add_discussion` / `add_discussion_post` ✏️ — 포럼 글쓰기/답글
 
 **공지사항 / Q&A(`ubboard`)** — 로그인 세션 스크레이핑
 

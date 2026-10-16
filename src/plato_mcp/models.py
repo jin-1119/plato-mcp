@@ -698,3 +698,56 @@ class QuizBestGrade(BaseModel):
     hasgrade: bool
     grade: float | None = None
     gradetopass: float | None = None
+
+
+class ForumSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_forum external API source -- NOT
+    yet verified against a live response (no course on this account uses
+    a standard mod_forum; all notice/board activity observed so far is the
+    custom `ubboard` module -- see tools/forum.py's module docstring for
+    how these two are different)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+    type: str | None = Field(default=None, description="e.g. 'general', 'news', 'qanda'.")
+    numdiscussions: int | None = None
+
+
+class ForumDiscussion(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    name: str
+    userfullname: str | None = None
+    created: datetime | None = None
+    numreplies: int | None = None
+    pinned: bool = False
+    locked: bool = False
+
+    @field_validator("created", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class ForumPost(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    subject: str | None = None
+    message: str | None = None
+    userfullname: str | None = Field(
+        default=None,
+        description="Who wrote this post -- see docs/pii_review.md for the same "
+        "classmate-content caveat already noted for ubboard.",
+    )
+    created: datetime | None = None
+
+    @field_validator("created", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)

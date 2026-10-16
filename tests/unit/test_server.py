@@ -32,6 +32,12 @@ EXPECTED_TOOLS = {
     "list_quizzes",
     "get_quiz_attempts",
     "get_quiz_best_grade",
+    # Phase 7 (issue #86)
+    "list_forums",
+    "get_forum_discussions",
+    "get_discussion_posts",
+    "add_discussion",
+    "add_discussion_post",
 }
 
 
