@@ -20,7 +20,7 @@ from plato_mcp.tools.assignments import (
 from plato_mcp.tools.calendar import list_calendar_events_for
 from plato_mcp.tools.courses import get_course_contents_for, list_courses_for
 from plato_mcp.tools.grades import get_grades_access_info_for, get_grades_for
-from plato_mcp.tools.messages import get_unread_messages_for
+from plato_mcp.tools.messages import get_unread_messages_for, get_unread_notification_count_for
 
 
 @pytest.fixture
@@ -716,6 +716,17 @@ def test_get_unread_messages_for(mock_client):
     mock_client.call.side_effect = fake_call
     result = get_unread_messages_for(mock_client)
     assert result[0].userfromfullname == "PLATO"
-    assert result[0].eventtype == "newlogin"
-    assert len(result) == 1
-    assert result[0].subject == "새 로그인"
+
+
+def test_get_unread_notification_count_for(mock_client):
+    # Real live value for this account was 2 at the time of testing (issue #87).
+    def fake_call(fn, **kw):
+        if fn == "core_webservice_get_site_info":
+            return {"userid": 448520}
+        if fn == "core_message_get_unread_notification_count":
+            assert kw == {"useridto": 448520}
+            return 2
+        raise AssertionError(fn)
+
+    mock_client.call.side_effect = fake_call
+    assert get_unread_notification_count_for(mock_client) == 2

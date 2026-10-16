@@ -84,7 +84,8 @@
 - `get_grades` — 성적 조회
 - `get_grades_access_info` — 이 계정의 성적 조회 권한 확인 (전체 열람 권한 등)
 - `list_calendar_events` — 캘린더 일정
-- `get_unread_messages` — 안 읽은 쪽지
+- `get_unread_messages` / `get_unread_notification_count` — 안 읽은 쪽지 (⚠️ PLATO는 1:1
+  메시징/대화 기능이 사이트 전체에서 비활성화되어 있음 — 알림만 동작)
 - `get_course_completion_status` — 강좌 단위 이수 현황 (이수 기준이 설정된 강좌만)
 - `get_activity_completion_status` — 강좌 내 활동/자료별 이수 현황 (동영상 강의 시청률 포함)
 - `get_upcoming_action_events` — 마감 임박한 할 일(과제/시청 기한 등) 통합 조회
