@@ -335,6 +335,13 @@ class SubmissionStatus(BaseModel):
         default=None, description="Individual extension granted to this student, if any."
     )
     gradingstatus: str | None = None
+    submitted_files: list[FileEntry] = Field(
+        default_factory=list,
+        description="The actual file(s) submitted via the 'file' plugin, if any -- added in "
+        "issue #100 after auditing a real response and finding this was silently dropped "
+        "(lastattempt.submission.plugins[].fileareas[].files[], only present for "
+        "type=='file').",
+    )
 
     @field_validator("timemodified", "extensionduedate", mode="before")
     @classmethod

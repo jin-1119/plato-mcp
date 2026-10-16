@@ -74,6 +74,8 @@
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출
+- `remove_submission` ✏️ — 과제 제출 철회 (⚠️ 실제 실행 경로는 아직 PLATO에서
+  `invalidparameter` 오류 발생, 미리보기만 동작 확인됨)
 - `get_grades` — 성적 조회
 - `get_grades_access_info` — 이 계정의 성적 조회 권한 확인 (전체 열람 권한 등)
 - `list_calendar_events` — 캘린더 일정

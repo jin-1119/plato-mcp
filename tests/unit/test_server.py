@@ -40,6 +40,8 @@ EXPECTED_TOOLS = {
     "add_discussion_post",
     # Phase 7 (issue #95)
     "get_grades_access_info",
+    # Phase 7 (issue #100)
+    "remove_submission",
 }
 
 
