@@ -14,6 +14,7 @@ from plato_mcp.errors import MoodleAPIError, PlatoMCPError
 from plato_mcp.tools.assignments import (
     get_assignment_detail_for,
     list_assignments_for,
+    remove_submission_for,
     submit_assignment_for,
 )
 from plato_mcp.tools.calendar import list_calendar_events_for
@@ -218,6 +219,55 @@ def test_get_assignment_detail_for_late_submission(mock_client):
     detail = get_assignment_detail_for(mock_client, course_id=6253, assignment_id=1)
     assert detail.submission.submitted is True
     assert detail.submission.late is True
+
+
+# Real live response shape from mod_assign_get_submission_status against the
+# real assignment (course 5968, id 4975) after the #84 test file submission --
+# issue #100 audit found submitted files were silently dropped before this.
+def test_get_assignment_detail_for_exposes_submitted_files(mock_client):
+    def fake_call(fn, **kw):
+        if fn == "mod_assign_get_assignments":
+            return {
+                "courses": [{"id": 5968, "assignments": [{"id": 4975, "name": "중간고사 전 과제"}]}]
+            }
+        if fn == "core_webservice_get_site_info":
+            return {"userid": 448520}
+        if fn == "mod_assign_get_submission_status":
+            return {
+                "lastattempt": {
+                    "submission": {
+                        "status": "submitted",
+                        "timemodified": 1792177405,
+                        "plugins": [
+                            {
+                                "type": "file",
+                                "name": "파일 제출",
+                                "fileareas": [
+                                    {
+                                        "area": "submission_files",
+                                        "files": [
+                                            {
+                                                "filename": "test_submission.txt",
+                                                "filepath": "/",
+                                                "filesize": 113,
+                                                "fileurl": "https://plato.pusan.ac.kr/webservice/pluginfile.php/583882/assignsubmission_file/submission_files/110787/test_submission.txt",
+                                                "timemodified": 1792177405,
+                                                "mimetype": "text/plain",
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                }
+            }
+        raise AssertionError(f"unexpected call: {fn}")
+
+    mock_client.call.side_effect = fake_call
+    detail = get_assignment_detail_for(mock_client, course_id=5968, assignment_id=4975)
+    assert len(detail.submission.submitted_files) == 1
+    assert detail.submission.submitted_files[0].filename == "test_submission.txt"
 
 
 def test_get_assignment_detail_for_full_feedback_and_history(mock_client):
@@ -498,6 +548,57 @@ def test_assignment_summary_file_submission_computed_field_from_real_configs():
 
     dumped = assignment.model_dump()
     assert dumped["file_submission"]["enabled"] is True
+
+
+def test_remove_submission_for_dry_run_does_not_call(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 6253, "assignments": [{"id": 1, "name": "HW1"}]}]
+    }
+
+    result = remove_submission_for(mock_client, course_id=6253, assignment_id=1)
+
+    assert result.dry_run is True
+    mock_client.call.assert_called_once_with("mod_assign_get_assignments", courseids=[6253])
+
+
+def test_remove_submission_for_real_run_requires_preview_then_calls(mock_client):
+    # Tests our wiring/preview-tracker logic in isolation -- the live call
+    # itself is currently unverified (returns invalidparameter against the
+    # real account, see remove_submission_for's docstring); this mock
+    # assumes the best-guess schema succeeds, which it doesn't yet in reality.
+    def fake_call(fn, **kw):
+        if fn == "mod_assign_get_assignments":
+            return {"courses": [{"id": 6253, "assignments": [{"id": 1, "name": "HW1"}]}]}
+        if fn == "mod_assign_remove_submission":
+            return []
+        raise AssertionError(fn)
+
+    mock_client.call.side_effect = fake_call
+
+    remove_submission_for(mock_client, course_id=6253, assignment_id=1)
+    result = remove_submission_for(mock_client, course_id=6253, assignment_id=1, dry_run=False)
+
+    assert result.executed is True
+    save_call = next(
+        c for c in mock_client.call.call_args_list if c.args[0] == "mod_assign_remove_submission"
+    )
+    assert save_call.kwargs == {"assignmentid": 1}
+
+
+def test_remove_submission_for_without_preview_raises(mock_client):
+    from plato_mcp.errors import WriteConfirmationError
+
+    mock_client.call.return_value = {
+        "courses": [{"id": 6253, "assignments": [{"id": 1, "name": "HW1"}]}]
+    }
+    with pytest.raises(WriteConfirmationError):
+        remove_submission_for(mock_client, course_id=6253, assignment_id=1, dry_run=False)
+
+
+def test_remove_submission_for_unknown_id_raises(mock_client):
+    mock_client.call.return_value = {"courses": [{"id": 6253, "assignments": []}]}
+    with pytest.raises(ValueError):
+        remove_submission_for(mock_client, course_id=6253, assignment_id=999)
 
 
 def test_get_grades_for_available(mock_client):

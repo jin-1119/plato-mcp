@@ -1,5 +1,19 @@
 """Tools: list_assignments, get_assignment_detail (issue #14), submit_assignment (issue #25,
-file-submission support added in issue #84)."""
+file-submission support added in issue #84), remove_submission (issue #100).
+
+Issue #100 audited the rest of the mod_assign student-side function family
+against the real assignment (id 4975, course 5968):
+- `mod_assign_get_user_flags` -- errored "No access rights in module
+  context" live, same as mod_assign_get_grades in #95. Skipped, confirmed
+  not accessible to a student account (these are teacher-set grading
+  workflow flags -- locked/mailed/extension -- not student data).
+- `mod_assign_view_assign`/`view_submission_status` -- NOT wired to any
+  tool, deliberately. These are Moodle's own "mark as viewed" logging
+  calls: calling them as a side effect of an AI read would mutate
+  server-side completion/viewed state the student didn't actually
+  trigger themselves. A tool call is not the same as a student opening
+  the page in their browser, and plato-mcp should not pretend otherwise.
+"""
 
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,6 +43,7 @@ from plato_mcp.write_tools import (
 )
 
 ACTION_SUBMIT_ASSIGNMENT = "submit_assignment"
+ACTION_REMOVE_SUBMISSION = "remove_submission"
 
 _COURSE_ID_FIELD = Field(description="PLATO/Moodle numeric course id, e.g. from list_courses.")
 _ASSIGNMENT_ID_FIELD = Field(description="Assignment id, e.g. from list_assignments.")
@@ -78,6 +93,12 @@ def get_assignment_detail_for(
             and match.duedate
             and datetime.fromtimestamp(timemodified, tz=UTC) > match.duedate
         )
+        submitted_files = []
+        for plugin in submission_raw.get("plugins", []):
+            if plugin.get("type") != "file":
+                continue
+            for filearea in plugin.get("fileareas", []):
+                submitted_files.extend(filearea.get("files", []))
         submission = SubmissionStatus(
             submitted=submission_raw.get("status") == "submitted",
             status=submission_raw.get("status"),
@@ -87,6 +108,7 @@ def get_assignment_detail_for(
             locked=lastattempt.get("locked"),
             extensionduedate=lastattempt.get("extensionduedate"),
             gradingstatus=lastattempt.get("gradingstatus"),
+            submitted_files=submitted_files,
         )
 
     feedback_raw = status.get("feedback")
@@ -258,6 +280,51 @@ def submit_assignment_for(
     return executed_result(preview, f"Submission for '{match.name}'")
 
 
+def remove_submission_for(
+    client: MoodleClient, course_id: int, assignment_id: int, dry_run: bool = True
+) -> WriteResult:
+    """Withdraw/clear this account's own submission for an assignment
+    (issue #100). IRREVERSIBLE and DESTRUCTIVE once dry_run=False -- this
+    discards already-submitted work (any files/text sent via
+    submit_assignment), not just a draft. Same preview/confirm pattern as
+    submit_assignment (docs/write_confirmation_pattern.md).
+
+    **KNOWN UNVERIFIED, live-tested and failing as of issue #100**: calling
+    `mod_assign_remove_submission` with `assignmentid` (the parameter name
+    Moodle 4.5 source documents) against the real assignment on this
+    account returns `invalidparameter` every time -- also tried
+    `assignid`, `+userid`, `+plugin=''`, zero params, and GET instead of
+    POST, all with the identical generic error (no field-specific detail
+    in the error message). The real required parameter shape could not be
+    determined empirically. The call is kept here (rather than removed)
+    because it's still the most plausible shape from source, dry_run=True
+    costs nothing, and a future session with a different test assignment
+    may have better luck -- but do not assume dry_run=False actually works
+    until it's been seen to succeed live. The real test submission (#84)
+    was NOT removed by any of these failed attempts -- an erroring call
+    makes no server-side change.
+    """
+    assignments = list_assignments_for(client, [course_id])
+    match = next((a for a in assignments if a.id == assignment_id), None)
+    if match is None:
+        raise ValueError(f"Assignment {assignment_id} not found in course {course_id}")
+
+    action_params = {"course_id": course_id, "assignment_id": assignment_id}
+    preview = {**action_params, "assignment_name": match.name}
+
+    if dry_run:
+        default_preview_tracker.record_preview(
+            client.session_key, ACTION_REMOVE_SUBMISSION, action_params
+        )
+        return preview_result(preview, f"Removal of submission for '{match.name}'")
+
+    default_preview_tracker.require_previewed(
+        client.session_key, ACTION_REMOVE_SUBMISSION, action_params
+    )
+    client.call("mod_assign_remove_submission", assignmentid=assignment_id)
+    return executed_result(preview, f"Removal of submission for '{match.name}'")
+
+
 def register(mcp) -> None:
     @mcp.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     async def list_assignments(
@@ -320,3 +387,32 @@ def register(mcp) -> None:
         return submit_assignment_for(
             get_client(ctx), course_id, assignment_id, text, file_paths, dry_run
         )
+
+    @mcp.tool(annotations=WRITE_TOOL_ANNOTATIONS)
+    async def remove_submission(
+        course_id: Annotated[int, _COURSE_ID_FIELD],
+        assignment_id: Annotated[int, _ASSIGNMENT_ID_FIELD],
+        ctx: Context,
+        dry_run: Annotated[
+            bool,
+            Field(
+                description="If True (default), only preview the removal without doing it. "
+                "Call again with dry_run=False (same parameters) to actually remove it."
+            ),
+        ] = True,
+    ) -> WriteResult:
+        """Withdraw/clear this account's own submission for an assignment.
+        IRREVERSIBLE and DESTRUCTIVE once dry_run=False -- this discards
+        already-submitted work (files/text), not a draft.
+
+        KNOWN ISSUE: live testing found dry_run=False currently fails with
+        an "invalid parameter" error from PLATO every time (the real
+        required parameter shape wasn't determined -- see
+        remove_submission_for's docstring). dry_run=True (preview) works
+        and is safe to call. Do not rely on dry_run=False actually working
+        until this is fixed.
+
+        Call with dry_run=True (default) first, show the preview to the user,
+        and only call again with dry_run=False after they explicitly confirm.
+        """
+        return remove_submission_for(get_client(ctx), course_id, assignment_id, dry_run)

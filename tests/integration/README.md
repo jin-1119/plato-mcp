@@ -133,6 +133,28 @@ Run against a real PLATO account with at least one enrolled course.
 - [x] `mod_assign_get_grades` — verified live against the real assignment (id 4975): "No access
       rights in module context". Skipped, confirmed not accessible to a student account
 
+## Phase 7 checklist (issue #100 -- mod_assign student-side remainder)
+
+- [x] `mod_assign_get_user_flags` — verified live against the real assignment: "No access rights
+      in module context" (same as #95's `mod_assign_get_grades`). Skipped, confirmed
+      not-accessible-to-students
+- [x] `mod_assign_view_assign`/`view_submission_status` — deliberately NOT wired to any tool;
+      these are view-logging calls that would mutate server-side viewed state as a side effect
+      of an AI "read" (see `tools/assignments.py`'s module docstring)
+- [x] Audited `mod_assign_get_submission_status`'s real response for unexposed fields: found
+      `lastattempt.submission.plugins[].fileareas[].files[]` (the actual submitted file list)
+      was silently dropped. Fixed -- `SubmissionStatus.submitted_files` now exposes it,
+      verified live against the real #84 test submission (`test_submission.txt` shows up
+      correctly)
+- [x] `mod_assign_remove_submission` — **live-tested and currently failing.** Tried
+      `assignmentid`, `assignid`, `+userid`, `+plugin=''`, zero params, and GET instead of POST
+      against the real assignment (id 4975) -- every combination returns a generic
+      `invalidparameter` error with no field-specific detail. The real required parameter shape
+      could not be determined. The tool is still wired (dry_run=True/preview works and is safe)
+      but dry_run=False is NOT confirmed working -- see the loud docstring warning in
+      `remove_submission_for`. Confirmed the real test submission was NOT affected by any of
+      the failed attempts (an erroring call makes no server-side change).
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
