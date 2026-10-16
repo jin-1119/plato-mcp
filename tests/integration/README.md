@@ -108,6 +108,16 @@ Run against a real PLATO account with at least one enrolled course.
       real quiz to verify the multi-step write flow against; see `tools/quiz.py`'s module
       docstring for the full reasoning.
 
+## Phase 7 checklist (issue #86 -- forum support)
+
+- [x] `mod_forum_get_forums_by_courses` — verified live against real courses: correctly returns
+      `[]` (no course on this account has ever used a standard mod_forum -- all notice/board
+      activity is the custom `ubboard` module instead)
+- [ ] Discussion/post reads, add_discussion, add_discussion_post — schema-only, never exercised
+      against a real forumid/discussionid
+- [ ] lock/pin/subscription/favourite-state functions — not wired to tools; documented as
+      moderator-only or unverifiable-without-a-real-forum in `tools/forum.py`'s module docstring
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
