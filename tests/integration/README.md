@@ -118,6 +118,21 @@ Run against a real PLATO account with at least one enrolled course.
 - [ ] lock/pin/subscription/favourite-state functions — not wired to tools; documented as
       moderator-only or unverifiable-without-a-real-forum in `tools/forum.py`'s module docstring
 
+## Phase 7 checklist (issue #95 -- grades deep-dive)
+
+- [x] `core_grades_get_gradeitems` — verified live against course 5968: `invalidparameter` error
+      on a minimal call. Skipped (redundant with get_grades; not worth reverse-engineering the
+      exact required params)
+- [x] `core_grades_get_gradable_users` — verified live: `nopermissions` (lists all students for
+      grading, a teacher capability). Skipped, confirmed admin/teacher-only
+- [x] `gradereport_user_get_grades_table` — verified live: returns a fully-rendered HTML table
+      (every cell is browser markup), not structured data. Skipped as wrong-shaped for an API
+- [x] `gradereport_user_get_access_information` — verified live against course 5968:
+      `{canviewusergradereport: true, canviewmygrades: true, canviewallgrades: false}`. Wired as
+      `get_grades_access_info`
+- [x] `mod_assign_get_grades` — verified live against the real assignment (id 4975): "No access
+      rights in module context". Skipped, confirmed not accessible to a student account
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

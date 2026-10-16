@@ -75,6 +75,7 @@
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출
 - `get_grades` — 성적 조회
+- `get_grades_access_info` — 이 계정의 성적 조회 권한 확인 (전체 열람 권한 등)
 - `list_calendar_events` — 캘린더 일정
 - `get_unread_messages` — 안 읽은 쪽지
 - `get_course_completion_status` — 강좌 단위 이수 현황 (이수 기준이 설정된 강좌만)

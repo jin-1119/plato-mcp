@@ -18,7 +18,7 @@ from plato_mcp.tools.assignments import (
 )
 from plato_mcp.tools.calendar import list_calendar_events_for
 from plato_mcp.tools.courses import get_course_contents_for, list_courses_for
-from plato_mcp.tools.grades import get_grades_for
+from plato_mcp.tools.grades import get_grades_access_info_for, get_grades_for
 from plato_mcp.tools.messages import get_unread_messages_for
 
 
@@ -544,6 +544,24 @@ def test_get_grades_for_other_error_propagates(mock_client):
     mock_client.call.side_effect = fake_call
     with pytest.raises(MoodleAPIError):
         get_grades_for(mock_client, course_id=6253)
+
+
+def test_get_grades_access_info_for_real_response_shape(mock_client):
+    # Real live response shape against course 5968 (issue #95).
+    mock_client.call.return_value = {
+        "canviewusergradereport": True,
+        "canviewmygrades": True,
+        "canviewallgrades": False,
+        "warnings": [],
+    }
+
+    result = get_grades_access_info_for(mock_client, course_id=5968)
+
+    assert result.canviewmygrades is True
+    assert result.canviewallgrades is False
+    mock_client.call.assert_called_once_with(
+        "gradereport_user_get_access_information", courseid=5968
+    )
 
 
 def test_list_calendar_events_sorted_chronologically(mock_client):

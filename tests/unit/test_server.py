@@ -38,6 +38,8 @@ EXPECTED_TOOLS = {
     "get_discussion_posts",
     "add_discussion",
     "add_discussion_post",
+    # Phase 7 (issue #95)
+    "get_grades_access_info",
 }
 
 
