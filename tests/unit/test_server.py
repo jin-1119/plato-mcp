@@ -42,6 +42,8 @@ EXPECTED_TOOLS = {
     "get_grades_access_info",
     # Phase 7 (issue #100)
     "remove_submission",
+    # Phase 7 (issue #102)
+    "get_course_updates_since",
 }
 
 

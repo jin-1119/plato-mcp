@@ -71,6 +71,8 @@
 
 - `list_courses` — 수강 중인 강좌 목록
 - `get_course_contents` — 강좌 콘텐츠(주차별 자료 등)
+- `get_course_updates_since` — 강좌 변경사항 감지 (표준 Moodle 모듈만 — ubfile/ubboard/vod는
+  변경감지 콜백 미구현, 포함 안 됨)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출

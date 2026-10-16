@@ -155,6 +155,21 @@ Run against a real PLATO account with at least one enrolled course.
       `remove_submission_for`. Confirmed the real test submission was NOT affected by any of
       the failed attempts (an erroring call makes no server-side change).
 
+## Phase 7 checklist (issue #102 -- course change detection)
+
+- [x] `core_course_check_updates` — verified live against the real `assign` module (cmid 85415,
+      course 5968): returns rich categorized changes (configuration/completion/gradeitems/
+      submissions/grades). Verified against a custom `ubfile` module (cmid 31637, course 6253):
+      `missingcallback` -- the module doesn't implement Moodle's change-tracking at all
+- [x] `core_course_get_updates_since` — verified live against course 5968: identical real data
+      for the assign module in one call (no per-module tocheck array needed), confirmed
+      `missingcallback` for every custom module in the course (ubfile) -- wired as the tool
+      (`check_updates` itself was NOT given a separate tool, redundant)
+- [x] Findings cross-posted to #33 (deferred notification spike): the underlying primitive only
+      works for standard activities (assign/quiz/forum-style), NOT this platform's dominant
+      content types (ubfile/ubboard/vod) -- a real notification feature needs a different
+      strategy (content-diffing) for those
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
