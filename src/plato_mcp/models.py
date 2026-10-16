@@ -751,3 +751,16 @@ class ForumPost(BaseModel):
     @classmethod
     def _convert_epoch(cls, v: int | None) -> datetime | None:
         return _epoch_to_datetime(v)
+
+
+class GradeAccessInfo(BaseModel):
+    """Result of gradereport_user_get_access_information (issue #95) --
+    confirmed live against the real account/course 5968."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    canviewusergradereport: bool = False
+    canviewmygrades: bool = False
+    canviewallgrades: bool = Field(
+        default=False, description="True for teachers/TAs who can see everyone's grades."
+    )
