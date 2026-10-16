@@ -5,6 +5,7 @@ fields than we care about, and picking out only the ones we need keeps the
 tool output focused instead of dumping the raw API response at the LLM.
 """
 
+import json
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
@@ -63,7 +64,63 @@ class FileEntry(BaseModel):
         return _epoch_to_datetime(v)
 
 
+class VodProgress(BaseModel):
+    """Parsed from a `vod` (course video lecture) module's `customdata` JSON
+    string (issue #88). This is the completion/progress metadata Moodle
+    already returns alongside the module listing -- `core_course_get_contents`
+    plato-mcp already calls -- with NO extra network call needed.
+
+    Deliberately does NOT expose the actual video stream: `vod` has no
+    `contents`/`fileurl` field at all, and the real stream is served only
+    through Coursemos's token-gated DRM player (`.m3u8` + `csmsmedia` SDK).
+    Building a bypass for that was explicitly decided against during this
+    epic's planning (ToS/anti-circumvention risk, a different risk category
+    than this repo's existing `ubboard` HTML scraping) -- do not "fix" this
+    by trying to scrape the stream; only the metadata below is in scope.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    playtime_seconds: int | None = None
+    completion_progress_percent: int | None = Field(
+        default=None, description="How much of the video this account has watched, 0-100."
+    )
+    lateness_progress_percent: int | None = None
+    attendance_required: bool = False
+    time_open: datetime | None = None
+    time_close: datetime | None = None
+    time_lateness: datetime | None = Field(
+        default=None, description="Deadline after which watching counts as late."
+    )
+
+    @classmethod
+    def from_customdata(cls, raw: str | None) -> "VodProgress | None":
+        if not raw:
+            return None
+        try:
+            parsed = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return None
+        if not isinstance(parsed, dict):
+            return None
+        playtime = parsed.get("playtime")
+        return cls(
+            playtime_seconds=int(playtime) if playtime else None,
+            completion_progress_percent=parsed.get("completionprogress"),
+            lateness_progress_percent=parsed.get("latenessprogress"),
+            attendance_required=parsed.get("useattend") == "1",
+            time_open=_epoch_to_datetime(parsed.get("timeopen")),
+            time_close=_epoch_to_datetime(parsed.get("timeclose")),
+            time_lateness=_epoch_to_datetime(parsed.get("timelateness")),
+        )
+
+
 class CourseModule(BaseModel):
+    """One activity/resource inside a course section. Note on `vod` (course
+    video lectures): this never exposes the actual video stream -- see
+    `VodProgress`'s docstring for why that's intentional, not an oversight.
+    """
+
     model_config = ConfigDict(extra="ignore")
 
     id: int
@@ -74,6 +131,11 @@ class CourseModule(BaseModel):
         default=None, description="Whether this account has marked/viewed this module complete."
     )
     contents: list[FileEntry] = Field(default_factory=list)
+    vod_progress: VodProgress | None = Field(
+        default=None,
+        description="Only set when modname == 'vod'. Watch-progress metadata, "
+        "not the video itself -- see VodProgress docstring.",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -84,6 +146,19 @@ class CourseModule(BaseModel):
             completiondata = data.get("completiondata")
             if isinstance(completiondata, dict):
                 data = {**data, "completed": completiondata.get("isoverallcomplete")}
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_vod_progress(cls, data):
+        if (
+            isinstance(data, dict)
+            and data.get("modname") == "vod"
+            and "vod_progress" not in data
+        ):
+            progress = VodProgress.from_customdata(data.get("customdata"))
+            if progress is not None:
+                data = {**data, "vod_progress": progress}
         return data
 
 
@@ -409,6 +484,99 @@ class MessageItem(BaseModel):
     timecreated: datetime | None = None
 
     @field_validator("timecreated", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class CourseCompletionDetail(BaseModel):
+    """One criterion's human-readable detail, from
+    `core_completion_get_course_completion_status`'s nested `details` object.
+    `criteria` is an HTML fragment (e.g. a link to the activity), verified
+    live against a real course (issue #88)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    type: str | None = None
+    criteria: str | None = None
+    requirement: str | None = None
+    status: str | None = None
+
+
+class CourseCompletionCriterion(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    type: int
+    title: str
+    status: str
+    complete: bool
+    timecompleted: datetime | None = None
+    details: CourseCompletionDetail | None = None
+
+    @field_validator("timecompleted", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class CourseCompletionResult(BaseModel):
+    """Result of `core_completion_get_course_completion_status` (issue #88).
+
+    `available=False` covers the live-verified `nocriteriaset` case (most
+    courses on this account -- course-level completion tracking is an
+    opt-in Moodle feature most courses here don't enable), mirroring how
+    `GradesResult.available` handles `nopermissiontoviewgrades`."""
+
+    courseid: int
+    available: bool
+    completed: bool | None = None
+    criteria: list[CourseCompletionCriterion] = Field(default_factory=list)
+    message: str | None = None
+
+
+class ActivityCompletionRule(BaseModel):
+    """One flattened row of an activity's `details` array from
+    `core_completion_get_activities_completion_status` -- Moodle nests the
+    actual status/description one level deeper under `rulevalue`."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    rulename: str
+    status: int | None = None
+    description: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_rulevalue(cls, data):
+        if isinstance(data, dict) and "status" not in data:
+            rulevalue = data.get("rulevalue")
+            if isinstance(rulevalue, dict):
+                data = {
+                    **data,
+                    "status": rulevalue.get("status"),
+                    "description": rulevalue.get("description"),
+                }
+        return data
+
+
+class ActivityCompletionStatus(BaseModel):
+    """One module's row from `core_completion_get_activities_completion_status`
+    (issue #88) -- richer than `CourseModule.completed`, which only exposes
+    the final `isoverallcomplete` boolean."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    cmid: int
+    modname: str
+    state: int
+    timecompleted: datetime | None = None
+    hascompletion: bool
+    isautomatic: bool
+    uservisible: bool
+    isoverallcomplete: bool
+    details: list[ActivityCompletionRule] = Field(default_factory=list)
+
+    @field_validator("timecompleted", mode="before")
     @classmethod
     def _convert_epoch(cls, v: int | None) -> datetime | None:
         return _epoch_to_datetime(v)

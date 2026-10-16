@@ -77,6 +77,8 @@
 - `get_grades` — 성적 조회
 - `list_calendar_events` — 캘린더 일정
 - `get_unread_messages` — 안 읽은 쪽지
+- `get_course_completion_status` — 강좌 단위 이수 현황 (이수 기준이 설정된 강좌만)
+- `get_activity_completion_status` — 강좌 내 활동/자료별 이수 현황 (동영상 강의 시청률 포함)
 
 **공지사항 / Q&A(`ubboard`)** — 로그인 세션 스크레이핑
 

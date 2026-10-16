@@ -72,6 +72,19 @@ Run against a real PLATO account with at least one enrolled course.
       implemented, deliberately deferred.** stdio-only for now, same split `download_course_file`
       went through across issues #28 → #55.
 
+## Phase 7 checklist (issue #88 -- completion/progress status)
+
+- [x] `core_completion_get_course_completion_status` — verified live both ways: `nocriteriaset`
+      error against course 6253/5968 (most courses here don't enable course-level completion
+      tracking), and a real completed-with-criteria response against course 13518
+- [x] `core_completion_get_activities_completion_status` — verified live against course 13518,
+      including the nested `details[].rulevalue` shape (`completionview`, `completiontimeenabled`)
+- [x] `CourseModule.vod_progress` (parsed from a `vod` module's `customdata`, NOT the video stream
+      itself — see `models.VodProgress` docstring for why) — verified live against course 13518's
+      real vod modules: `playtime_seconds`, `completion_progress_percent`,
+      `lateness_progress_percent`, `attendance_required`, `time_open`/`time_close`/`time_lateness`
+      all matched the raw API response
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
