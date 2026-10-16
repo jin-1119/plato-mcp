@@ -28,6 +28,10 @@ EXPECTED_TOOLS = {
     "get_upcoming_action_events",
     "get_courses_by_timeline",
     "get_grades_overview",
+    # Phase 7 (issue #85)
+    "list_quizzes",
+    "get_quiz_attempts",
+    "get_quiz_best_grade",
 }
 
 

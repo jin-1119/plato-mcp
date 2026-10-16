@@ -82,6 +82,7 @@
 - `get_upcoming_action_events` — 마감 임박한 할 일(과제/시청 기한 등) 통합 조회
 - `get_courses_by_timeline` — 진행 중/예정/종료 강좌 필터링
 - `get_grades_overview` — 전체 강좌 종합 성적 한 번에 조회
+- `list_quizzes` / `get_quiz_attempts` / `get_quiz_best_grade` — 퀴즈 조회 (응시 기능은 미지원)
 
 **공지사항 / Q&A(`ubboard`)** — 로그인 세션 스크레이핑
 
