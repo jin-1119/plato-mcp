@@ -771,3 +771,37 @@ class GradeAccessInfo(BaseModel):
     canviewallgrades: bool = Field(
         default=False, description="True for teachers/TAs who can see everyone's grades."
     )
+
+
+class CourseUpdateItem(BaseModel):
+    """One category of change within a module, from
+    core_course_get_updates_since (issue #102) -- e.g. 'configuration',
+    'completion', 'gradeitems', 'submissions', 'grades'. `itemids` is only
+    present for some categories (e.g. which specific submission/grade
+    record changed); confirmed live against the real assignment."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    timeupdated: datetime | None = None
+    itemids: list[int] = Field(default_factory=list)
+
+    @field_validator("timeupdated", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class CourseModuleUpdates(BaseModel):
+    """One module's changes since a given timestamp, from
+    core_course_get_updates_since (issue #102). Only modules that
+    implement Moodle's check_updates_since callback appear here --
+    confirmed live: the real `assign` module does; this account's custom
+    modules (ubfile, ubboard, vod) do not and are silently absent (Moodle
+    reports them as a 'missingcallback' warning, not an error -- not
+    surfaced here since it's an expected, not exceptional, outcome)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int = Field(description="Course module id (cmid).")
+    updates: list[CourseUpdateItem] = Field(default_factory=list)

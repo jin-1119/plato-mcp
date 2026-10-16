@@ -2,6 +2,7 @@ from . import (
     assignments,
     calendar,
     completion,
+    course_updates,
     courses,
     dashboard,
     downloads,
@@ -25,3 +26,4 @@ def register_all(mcp) -> None:
     dashboard.register(mcp)
     quiz.register(mcp)
     forum.register(mcp)
+    course_updates.register(mcp)
