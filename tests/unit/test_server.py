@@ -44,6 +44,10 @@ EXPECTED_TOOLS = {
     "remove_submission",
     # Phase 7 (issue #102)
     "get_course_updates_since",
+    # Phase 7 (issue #103)
+    "get_course_module",
+    "search_courses",
+    "get_recent_courses",
 }
 
 
