@@ -13,11 +13,12 @@ Run against a real PLATO account with at least one enrolled course.
 
 - [x] `list_courses` — returns the account's actual enrolled courses (verified: 10 real courses)
 - [x] `get_course_contents` — section/module structure matches the browser view (verified against 거시경제학, id=6253)
-- [x] `list_assignments` — runs without error (verified: 0 live assignments existed at test time across
-      enrolled courses, so only the empty-list path was exercised live; the populated path is covered by
-      unit tests in `tests/unit/test_tools.py`)
-- [x] `get_assignment_detail` — same caveat as above; structurally verified via unit tests only
-      (submitted / not-submitted / late paths), since no real assignment existed to submit to
+- [x] `list_assignments` — verified live against a real assignment as of issue #84 (2026-10-17):
+      "중간고사 전 과제", course 5968 (관리회계). Earlier verification (0 live assignments at the time)
+      only exercised the empty-list path; both paths are now live-verified.
+- [x] `get_assignment_detail` — verified live against the same real assignment: `not-submitted` (status
+      `new`) before issue #84's submission, `submitted` after. `late`/extension paths still unit-test-only
+      (no late/extended real assignment has existed).
 - [x] `get_grades` — returns real grade items for a course with visible grades (verified: 9 items for 6253);
       the `nopermissiontoviewgrades` path was also hit live (against course 12633, an exchange-program
       course with restricted grades) and returned `available=False` instead of crashing
@@ -46,11 +47,30 @@ Run against a real PLATO account with at least one enrolled course.
 - [x] `submit_assignment` (dry_run path) — sanity-checked against a real course: correctly resolves
       real assignment metadata via `list_assignments_for` and raises `ValueError` for a nonexistent
       assignment id
-- [ ] `submit_assignment` (dry_run=False, real submission) — **never exercised.** No course on this
-      account has ever had a real assignment to submit to. `mod_assign_save_submission` and its
-      `plugindata[onlinetext_editor][...]` field names are verified against Moodle 4.5 source
-      (`mod/assign/submission/onlinetext/locallib.php`), not against a live response. Re-run once a
-      real assignment exists -- ideally a low-stakes test one, not a real graded submission.
+- [x] `submit_assignment` (dry_run=False, real submission) — **exercised live as of issue #84
+      (2026-10-17)**, with the user's explicit go-ahead: a small test `.txt` file was submitted as a
+      file attachment to the real "중간고사 전 과제" assignment (course 5968), and
+      `get_assignment_detail` confirmed `submitted=True`/`status='submitted'` afterward. The
+      onlinetext (plain-text) path specifically remains unit-test-only -- this real assignment's
+      `assignsubmission_onlinetext` plugin is disabled (confirmed via its live `configs`), so there
+      is still no real assignment to verify the text-submission wire format against.
+      `maxattempts=1` on this assignment -- do not re-run this live test against it again without
+      checking whether a resubmission is even possible (`cansubmit`) first.
+
+## Phase 7 checklist (issue #84 -- file submission)
+
+- [x] `core_files_get_unused_draft_itemid` — verified live, returns a real itemid for this account
+- [x] `MoodleClient.upload_file` (multipart POST to `/webservice/upload.php`, not a wsfunction) —
+      verified live: uploaded a real file into a draft area and got back a file descriptor
+- [x] `AssignmentSummary.file_submission`/`.onlinetext_submission` computed fields — verified live
+      against the real assignment's actual `configs` (file: enabled, max_files=20,
+      max_size_bytes=1GB, no extension restriction; onlinetext: not configured at all for this
+      assignment, i.e. `known=False`)
+- [x] Full submit_assignment file-path flow, dry_run=True then dry_run=False, against the real
+      assignment -- see Phase 3 checklist entry above for the result
+- [ ] Remote/streamable-http file submission (inline content instead of a local path) — **not
+      implemented, deliberately deferred.** stdio-only for now, same split `download_course_file`
+      went through across issues #28 → #55.
 
 ## Phase 3 checklist (issues #26-#27)
 
@@ -81,17 +101,16 @@ Run against a real PLATO account with at least one enrolled course.
 
 ## Known gap
 
-`list_assignments`/`get_assignment_detail`'s "assignment exists and has a submission" path has never
-been exercised against a live server, because no course in the test account currently has an assignment
-posted. Re-run this checklist once a real assignment appears, or before Phase 3 (issue #17, submit_assignment)
-starts -- that work will need a real assignment to test against anyway.
+A real assignment now exists (course 5968, "중간고사 전 과제", since ~2026-10). The
+"assignment exists and has a submission" path has been live-verified for the file-submission flow
+(issue #84) and basic not-submitted/submitted transitions, but `feedback.plugins[].editorfields[].text`
+(an instructor's actual written feedback comment) still has never appeared in a real response -- this
+assignment has not been graded yet. Re-check once it is.
 
 `AssignmentSummary`/`SubmissionStatus`/`SubmissionFeedback`/`PreviousAttempt`/`AssignmentExtraData` were
 expanded (cmid, cutoffdate, gradingduedate, intro/introattachments, activity/activityattachments,
 maxattempts, attemptreopenmethod, teamsubmission, cansubmit, locked, extensionduedate, gradingstatus,
 feedback.grade/plugins, previousattempts, assignmentdata) based on reading Moodle 4.5's
-`mod/assign/externallib.php` source directly (MOODLE_405_STABLE, matching PLATO's actual 4.5.13 release) --
-field names are trustworthy, but none of it has been checked against a real PLATO response yet. When a
-real assignment shows up, re-run `get_assignment_detail` against it and confirm every new field actually
-appears with the expected shape (especially `feedback.plugins[].editorfields[].text`, which is where an
-instructor's written feedback comment should show up).
+`mod/assign/externallib.php` source directly (MOODLE_405_STABLE, matching PLATO's actual 4.5.13 release).
+`configs` (added in issue #84) is now confirmed against a real response; the rest of this list is still
+schema-only, unconfirmed against live data.

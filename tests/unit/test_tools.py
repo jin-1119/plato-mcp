@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from plato_mcp.errors import MoodleAPIError
+from plato_mcp.errors import MoodleAPIError, PlatoMCPError
 from plato_mcp.tools.assignments import (
     get_assignment_detail_for,
     list_assignments_for,
@@ -345,6 +345,159 @@ def test_submit_assignment_for_unknown_id_raises(mock_client):
     mock_client.call.return_value = {"courses": [{"id": 6253, "assignments": []}]}
     with pytest.raises(ValueError):
         submit_assignment_for(mock_client, course_id=6253, assignment_id=999, text="x")
+
+
+# configs shape taken verbatim from a real live mod_assign_get_assignments
+# response (course 5968, "중간고사 전 과제" -- the first real assignment to
+# ever exist on the test account, issue #84).
+_REAL_FILE_SUBMISSION_ASSIGNMENT = {
+    "id": 4975,
+    "name": "중간고사 전 과제",
+    "configs": [
+        {"plugin": "file", "subtype": "assignsubmission", "name": "enabled", "value": "1"},
+        {
+            "plugin": "file",
+            "subtype": "assignsubmission",
+            "name": "maxfilesubmissions",
+            "value": "2",
+        },
+        {
+            "plugin": "file",
+            "subtype": "assignsubmission",
+            "name": "maxsubmissionsizebytes",
+            "value": "1000",
+        },
+        {"plugin": "file", "subtype": "assignsubmission", "name": "filetypeslist", "value": ""},
+    ],
+}
+
+
+def test_submit_assignment_for_file_dry_run_previews_without_uploading(mock_client, tmp_path):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    f = tmp_path / "report.pdf"
+    f.write_bytes(b"%PDF-1.4 fake pdf content")
+
+    result = submit_assignment_for(
+        mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)]
+    )
+
+    assert result.dry_run is True
+    assert result.preview["file_paths"] == [str(f)]
+    mock_client.upload_file.assert_not_called()
+    mock_client.get_unused_draft_itemid.assert_not_called()
+
+
+def test_submit_assignment_for_file_real_run_uploads_then_saves_submission(mock_client, tmp_path):
+    def fake_call(fn, **kw):
+        if fn == "mod_assign_get_assignments":
+            return {"courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]}
+        if fn == "mod_assign_save_submission":
+            return []
+        raise AssertionError(f"unexpected call: {fn}")
+
+    mock_client.call.side_effect = fake_call
+    mock_client.get_unused_draft_itemid.return_value = 999
+    f = tmp_path / "report.pdf"
+    content = b"%PDF-1.4 fake pdf content"
+    f.write_bytes(content)
+
+    submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+    result = submit_assignment_for(
+        mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)], dry_run=False
+    )
+
+    assert result.executed is True
+    mock_client.get_unused_draft_itemid.assert_called_once()
+    mock_client.upload_file.assert_called_once_with(999, "report.pdf", content)
+    save_call = next(
+        c for c in mock_client.call.call_args_list if c.args[0] == "mod_assign_save_submission"
+    )
+    assert save_call.kwargs["plugindata[files_filemanager]"] == 999
+    assert "plugindata[onlinetext_editor][text]" not in save_call.kwargs
+
+
+def test_submit_assignment_for_file_rejects_when_submission_type_disabled(mock_client, tmp_path):
+    mock_client.call.return_value = {
+        "courses": [{"id": 6253, "assignments": [{"id": 1, "name": "HW1"}]}]  # no configs at all
+    }
+    f = tmp_path / "x.pdf"
+    f.write_bytes(b"x")
+
+    with pytest.raises(PlatoMCPError, match="did not report whether"):
+        submit_assignment_for(mock_client, course_id=6253, assignment_id=1, file_paths=[str(f)])
+
+
+def test_submit_assignment_for_file_rejects_too_many_files(mock_client, tmp_path):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    paths = []
+    for i in range(3):  # max_files is 2 in the fixture
+        f = tmp_path / f"f{i}.pdf"
+        f.write_bytes(b"x")
+        paths.append(str(f))
+
+    with pytest.raises(PlatoMCPError, match="at most 2"):
+        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=paths)
+
+
+def test_submit_assignment_for_file_rejects_oversized_file(mock_client, tmp_path):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    f = tmp_path / "big.pdf"
+    f.write_bytes(b"x" * 2000)  # max_size_bytes is 1000 in the fixture
+
+    with pytest.raises(PlatoMCPError, match="exceeding"):
+        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+
+
+def test_submit_assignment_for_file_rejects_disallowed_extension(mock_client, tmp_path):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    f = tmp_path / "script.exe"
+    f.write_bytes(b"x")
+
+    with pytest.raises(PlatoMCPError, match="not allowed"):
+        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+
+
+def test_submit_assignment_for_file_rejects_missing_file(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+
+    with pytest.raises(PlatoMCPError, match="not found"):
+        submit_assignment_for(
+            mock_client, course_id=5968, assignment_id=4975, file_paths=["/no/such/file.pdf"]
+        )
+
+
+def test_submit_assignment_for_requires_text_or_files(mock_client):
+    with pytest.raises(PlatoMCPError, match="empty submission"):
+        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975)
+
+
+def test_assignment_summary_file_submission_computed_field_from_real_configs():
+    from plato_mcp.models import AssignmentSummary
+
+    assignment = AssignmentSummary(**_REAL_FILE_SUBMISSION_ASSIGNMENT)
+
+    assert assignment.file_submission.known is True
+    assert assignment.file_submission.enabled is True
+    assert assignment.file_submission.max_files == 2
+    assert assignment.file_submission.max_size_bytes == 1000
+    assert assignment.file_submission.allowed_extensions == []
+    # onlinetext has no config rows at all for this real assignment -- it's
+    # genuinely disabled for this one, which "known" lets us tell apart from
+    # "we don't know" (see onlinetext fail-open behavior in assignments.py).
+    assert assignment.onlinetext_submission.known is False
+
+    dumped = assignment.model_dump()
+    assert dumped["file_submission"]["enabled"] is True
 
 
 def test_get_grades_for_available(mock_client):
