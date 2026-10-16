@@ -97,6 +97,17 @@ Run against a real PLATO account with at least one enrolled course.
       which does have other real calendar-adjacent data) but deliberately given no tool of its
       own; see the "why" in `tools/dashboard.py`'s module docstring
 
+## Phase 7 checklist (issue #85 -- quiz support)
+
+- [x] `mod_quiz_get_quizzes_by_courses` — verified live against real courses: correctly returns
+      `{"quizzes": [], "warnings": []}` (no course on this account has ever had a real quiz)
+- [ ] `mod_quiz_get_user_attempts`/`get_user_best_grade` — schema-only (unit tests against
+      documented Moodle 4.5 shape), never exercised against a real quizid -- same caveat
+      `AssignmentSummary` had before a real assignment existed
+- [ ] Attempt-taking (start/answer/submit/review) — **deliberately not implemented.** Needs a
+      real quiz to verify the multi-step write flow against; see `tools/quiz.py`'s module
+      docstring for the full reasoning.
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

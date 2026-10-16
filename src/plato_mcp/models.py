@@ -637,3 +637,64 @@ class CourseGradeOverview(BaseModel):
         default=None, description="Formatted grade for display, e.g. '85.00' or '-' if ungraded."
     )
     rawgrade: float | None = None
+
+
+class QuizSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_quiz/classes/external source
+    (MOODLE_405_STABLE, matching PLATO's actual 4.5.13 release) -- NOT yet
+    verified against a live response, since no course in the test account
+    has a real quiz (issue #85, same caveat pattern as AssignmentSummary
+    before a real assignment existed -- see tests/integration/README.md).
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+    timeopen: datetime | None = None
+    timeclose: datetime | None = None
+    timelimit: int | None = Field(default=None, description="Seconds, 0/None means no limit.")
+    attempts: int | None = Field(
+        default=None, description="Max attempts allowed, 0 means unlimited."
+    )
+    grademethod: int | None = None
+    sumgrades: float | None = None
+    grade: float | None = None
+
+    @field_validator("timeopen", "timeclose", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class QuizAttempt(BaseModel):
+    """One row from mod_quiz_get_user_attempts -- schema-only, see
+    QuizSummary's docstring."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    quiz: int
+    attempt: int = Field(description="This attempt's sequence number for this user, 1-indexed.")
+    state: str = Field(description="inprogress / overdue / finished / abandoned.")
+    timestart: datetime | None = None
+    timefinish: datetime | None = None
+    sumgrades: float | None = None
+
+    @field_validator("timestart", "timefinish", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class QuizBestGrade(BaseModel):
+    """Result of mod_quiz_get_user_best_grade -- schema-only, see
+    QuizSummary's docstring."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    hasgrade: bool
+    grade: float | None = None
+    gradetopass: float | None = None

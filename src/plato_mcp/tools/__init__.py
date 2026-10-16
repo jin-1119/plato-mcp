@@ -8,6 +8,7 @@ from . import (
     grades,
     messages,
     notices_qna,
+    quiz,
 )
 
 
@@ -21,3 +22,4 @@ def register_all(mcp) -> None:
     downloads.register(mcp)
     completion.register(mcp)
     dashboard.register(mcp)
+    quiz.register(mcp)
