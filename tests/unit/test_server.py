@@ -24,6 +24,10 @@ EXPECTED_TOOLS = {
     # Phase 7 (issue #88)
     "get_course_completion_status",
     "get_activity_completion_status",
+    # Phase 7 (issue #89)
+    "get_upcoming_action_events",
+    "get_courses_by_timeline",
+    "get_grades_overview",
 }
 
 

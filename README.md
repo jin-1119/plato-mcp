@@ -79,6 +79,9 @@
 - `get_unread_messages` — 안 읽은 쪽지
 - `get_course_completion_status` — 강좌 단위 이수 현황 (이수 기준이 설정된 강좌만)
 - `get_activity_completion_status` — 강좌 내 활동/자료별 이수 현황 (동영상 강의 시청률 포함)
+- `get_upcoming_action_events` — 마감 임박한 할 일(과제/시청 기한 등) 통합 조회
+- `get_courses_by_timeline` — 진행 중/예정/종료 강좌 필터링
+- `get_grades_overview` — 전체 강좌 종합 성적 한 번에 조회
 
 **공지사항 / Q&A(`ubboard`)** — 로그인 세션 스크레이핑
 
