@@ -805,3 +805,21 @@ class CourseModuleUpdates(BaseModel):
 
     id: int = Field(description="Course module id (cmid).")
     updates: list[CourseUpdateItem] = Field(default_factory=list)
+
+
+class CourseModuleInfo(BaseModel):
+    """Result of core_course_get_course_module / get_course_module_by_instance
+    (issue #103) -- resolves a single module directly by id, confirmed
+    live to return the same data as filtering a full get_course_contents
+    response (which is how ubboard/scraper.py:find_board_id currently has
+    to do it)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int = Field(description="Course module id (cmid).")
+    course: int
+    name: str
+    modname: str
+    instance: int
+    section: int | None = None
+    sectionnum: int | None = None

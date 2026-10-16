@@ -170,6 +170,27 @@ Run against a real PLATO account with at least one enrolled course.
       content types (ubfile/ubboard/vod) -- a real notification feature needs a different
       strategy (content-diffing) for those
 
+## Phase 7 checklist (issue #103 -- course metadata/search)
+
+- [x] `core_course_get_course_module`/`get_course_module_by_instance` — verified live (cmid
+      31637): identical to filtering a real `get_course_contents` response. Wired as
+      `get_course_module`
+- [x] `core_course_search_courses` — verified live: searches the entire PLATO catalog (180
+      results for one test term), not just enrolled courses. Wired as `search_courses`
+- [x] `core_course_get_recent_courses` — verified live, returned real recently-accessed courses.
+      Wired as `get_recent_courses` (NOTE: may overlap with #116's
+      `block_recentlyaccesseditems_get_recent_items`, not yet landed -- revisit then)
+- [x] `core_course_get_categories` — verified live (returns the full category tree). Skipped --
+      admin/catalog taxonomy, no clear student-facing AI use case
+- [x] `core_course_get_user_navigation_options`/`get_user_administration_options` — verified
+      live against course 5968: UI show/hide booleans (every administration option was `false`
+      for this student account). Skipped -- no data, just UI capability flags
+- [x] `core_course_set_favourite_courses` — skipped, no real use case surfaced
+- [x] `core_course_view_course` — deliberately not wired, same view-logging reasoning as #100
+- [x] Full untruncated `core_course_get_contents` field audit (course 5968): `section.summary`
+      and `module.description` exist in the schema but were empty/None for every section and
+      module checked -- not worth exposing fields with no observed real data
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
