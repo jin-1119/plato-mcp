@@ -21,6 +21,9 @@ EXPECTED_TOOLS = {
     "post_qna_question",
     # Phase 4 (files)
     "download_course_file",
+    # Phase 7 (issue #88)
+    "get_course_completion_status",
+    "get_activity_completion_status",
 }
 
 
