@@ -191,6 +191,22 @@ Run against a real PLATO account with at least one enrolled course.
       and `module.description` exist in the schema but were empty/None for every section and
       module checked -- not worth exposing fields with no observed real data
 
+## Phase 7 checklist (issues #87/#104/#105 -- messaging: site-wide disabled)
+
+- [x] **Major finding, confirmed live**: PLATO has real-time messaging/conversations disabled
+      site-wide (Moodle's `messaging` site config). Every conversation-related function errors
+      with `{"errorcode": "disabled", "message": "이 사이트에서는 소식 전달이 안 됨"}` --
+      `get_conversations`, `get_conversation_counts`, `get_self_conversation`,
+      `get_member_info`, `data_for_messagearea_search_messages`, `send_instant_messages`,
+      `get_user_contacts` all confirmed. This is a site admin setting, not per-account --
+      nothing built on these functions can work here regardless of caller.
+- [x] What still works: `get_messages` (notifications, already used) and
+      `get_unread_notification_count` (returned a real value, 2, live) -- the separate
+      *notifications* system, unaffected by the messaging-disabled setting. Wired as a new
+      tool.
+- [ ] No tools built for conversation read/send/contacts (#87/#104/#105) -- there is nothing to
+      build. Re-verify if PLATO ever enables site messaging.
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

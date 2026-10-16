@@ -48,6 +48,8 @@ EXPECTED_TOOLS = {
     "get_course_module",
     "search_courses",
     "get_recent_courses",
+    # Phase 7 (issue #87)
+    "get_unread_notification_count",
 }
 
 
