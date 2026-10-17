@@ -405,6 +405,26 @@ acceptance criteria expected to check for.
 - [x] `update_picture`/`agree_site_policy` — not wired, no AI-appropriate use case (the latter
       specifically: an AI should not accept legal/site policies on a user's behalf)
 
+## Phase 7 checklist (issue #97 -- groups and enrolment)
+
+- [x] `core_group_get_course_user_groups` — verified live: correctly empty (no groups
+      configured in this account's real courses). Wired as `get_my_course_groups`
+- [x] `core_enrol_get_enrolled_users` — verified live: 52 real classmates with roles. Wired as
+      `get_enrolled_users` (same data as PLATO's own participant list)
+- [x] `core_group_get_course_groups` — verified live: `nopermissions` (팀 관리 = team
+      management, teacher-only). Skipped
+- [x] `core_group_get_activity_allowed_groups` — not called; no group-restricted activity
+      exists on this account to call it against meaningfully
+- [x] `core_enrol_get_course_enrolment_methods` — verified live: `[]` for this account (no
+      visible enrolment-method detail for a student role). Skipped
+- [x] `core_enrol_search_users` — verified live: errored on a minimal call, not pursued
+      further -- same privacy-scope concern as #96's get_users_by_field decision
+- [x] `enrol_guest_get_instance_info` — not called, low standalone value, no real guest-enrol
+      instance to verify against
+- [x] `enrol_self_enrol_user` — **explicit user decision: not built.** Changes real account
+      enrolment; no clear use case for an AI assistant to choose which courses to self-enrol
+      the user into
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
