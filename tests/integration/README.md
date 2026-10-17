@@ -508,6 +508,22 @@ deliberately NOT invoked, per this issue's own verification steps):
       (`{"files": [], "warnings": [...]}`, not an exception) -- no real H5P content exists on
       this account to test a valid URL against
 
+## Phase 7 checklist (issue #117 -- tags, ratings, comments)
+
+No new tools. Cross-cutting annotation APIs -- moot given the activities they'd attach to
+don't exist/aren't configured here:
+
+- [x] `core_tag_get_tag_cloud`/`get_tag_collections` — verified live:
+      `{"errorcode": "tagsaredisabled", "message": "태그를 사용할 수 없음"}`. Tags disabled
+      site-wide
+- [x] `core_rating_get_item_ratings` — verified live: `invalidparameter` on a minimal call (no
+      real rateable forum post/glossary entry exists to construct a valid call against -- #86's
+      forum and #109's glossary are both confirmed empty on this account)
+- [x] `core_comment_get_comments` — verified live: `invalidparameter` on a minimal call, same
+      reason (no real commentable item exists)
+- [x] As anticipated in this issue's own description: moot given #86 (forum)/#109
+      (glossary)/#110 (database) all confirmed no real instances on this account
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
