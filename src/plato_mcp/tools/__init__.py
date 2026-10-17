@@ -8,6 +8,7 @@ from . import (
     course_updates,
     courses,
     dashboard,
+    database_activity,
     downloads,
     feedback,
     forum,
@@ -45,3 +46,4 @@ def register_all(mcp) -> None:
     choice_survey.register(mcp)
     scorm_h5p.register(mcp)
     glossary.register(mcp)
+    database_activity.register(mcp)
