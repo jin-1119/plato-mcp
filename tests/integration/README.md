@@ -456,6 +456,20 @@ called live against the real assignment (id 4975) with a real student account:
 
 **Zero tools built, as predicted.** No grading write unexpectedly succeeded.
 
+## Phase 7 checklist (issue #112 -- badges, blog, notes)
+
+No new tools -- all three feature families confirmed disabled site-wide, live:
+
+- [x] `core_badges_get_user_badges` — `{"errorcode": "badgesdisabled", "message": "이 사이트에
+      뱃지가 활성화되어 있지 않습니다."}`
+- [x] `core_blog_get_entries` — `{"errorcode": "blogdisable", "message": "블로깅이 활성화되어
+      있지 않음!"}`
+- [x] `core_notes_get_course_notes` — `{"errorcode": "notesdisabled", "message": "기록을 할 수
+      없습니다."}`
+
+All three are platform-level config, not account permissions -- confirmed nothing in this
+family can work here regardless of caller.
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
