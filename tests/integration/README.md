@@ -439,6 +439,23 @@ No new tools from this issue -- documentation-only.
       This records a user's action on an AI-predicted insight (e.g. dismissing a
       dropout-risk prediction) -- a teacher/analytics-dashboard concept, not pursued further
 
+## Phase 7 checklist (issue #101 -- mod_assign teacher/grading-side, zero tools as expected)
+
+Documentation-only, exactly as this issue's own acceptance criteria expected. All 12 functions
+called live against the real assignment (id 4975) with a real student account:
+
+- [x] `save_grade`, `lock_submissions`, `unlock_submissions`, `revert_submissions_to_draft`,
+      `reveal_identities`, `save_user_extensions`, `set_user_flags` — all confirmed
+      `required_capability_exception`/`nopermissions` (각각 "과제 채점", "학생의 아이덴티티
+      노출", "제출일 연장" 권한 없음)
+- [x] `get_participant`, `list_participants` — confirmed `nopermission`
+- [x] `get_submissions`, `get_user_mappings` — confirmed "No access rights in module context"
+      (same pattern as #95's `mod_assign_get_grades`)
+- [x] `save_grades` — `invalidparameter` on a minimal call (moot either way given `save_grade`
+      already confirmed permission-denied for the same capability)
+
+**Zero tools built, as predicted.** No grading write unexpectedly succeeded.
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
