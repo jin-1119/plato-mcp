@@ -914,3 +914,21 @@ class WorkshopSummary(BaseModel):
     phase: int | None = Field(
         default=None, description="Workshop phase: setup/submission/assessment/grading/closed."
     )
+
+
+class FeedbackSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_feedback external API source --
+    NOT yet verified against a live response. mod_feedback is not
+    present in any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_feedbacks itself IS live-verified (correctly
+    empty). Re-check field names once a course with real feedback
+    exists, same caveat pattern as AssignmentSummary before a real
+    assignment existed."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+    anonymous: int | None = None
