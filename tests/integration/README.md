@@ -372,6 +372,13 @@ acceptance criteria expected to check for.
 - [ ] Remaining 10 functions (fields, entries, search, entry writes) -- not built, no real
       database activity to verify against
 
+## Phase 7 checklist (issue #111 -- mod_wiki and mod_chat)
+
+- [x] `mod_wiki_get_wikis_by_courses` — verified live: correctly empty. Wired as `list_wikis`
+- [x] `mod_chat_get_chats_by_courses` — verified live: correctly empty. Wired as `list_chats`
+- [ ] Remaining functions (pages/subwikis, sessions/messages, writes) -- not built, no real
+      instance to verify against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
