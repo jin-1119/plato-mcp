@@ -57,6 +57,8 @@ EXPECTED_TOOLS = {
     # Phase 7 (issue #116)
     "get_recent_items",
     "get_starred_courses",
+    # Phase 7 (issue #91)
+    "list_video_conferences",
 }
 
 

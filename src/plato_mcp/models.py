@@ -858,3 +858,20 @@ class RecentItem(BaseModel):
     @classmethod
     def _convert_epoch(cls, v: int | None) -> datetime | None:
         return _epoch_to_datetime(v)
+
+
+class VideoConference(BaseModel):
+    """Schema based on Moodle 4.5's mod_bigbluebuttonbn external API
+    source -- NOT yet verified against a live response. Neither
+    mod_bigbluebuttonbn nor mod_zoom appears in any course on this
+    account (live scan, 2026-10-17); list_video_conferences itself IS
+    live-verified (correctly empty). Re-check field names once a course
+    with a real video-conference module exists -- same caveat pattern as
+    AssignmentSummary before a real assignment existed."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None

@@ -13,6 +13,7 @@ from . import (
     messages,
     notices_qna,
     quiz,
+    video_conference,
 )
 
 
@@ -31,3 +32,4 @@ def register_all(mcp) -> None:
     course_updates.register(mcp)
     course_lookup.register(mcp)
     blocks.register(mcp)
+    video_conference.register(mcp)
