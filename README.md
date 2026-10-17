@@ -87,6 +87,7 @@
   실사용 사례 없음)
 - `list_scorms` / `list_h5p_activities` — SCORM/H5P 패키지 콘텐츠 조회 (실행/추적 기능은
   미지원, 실사용 사례 없음)
+- `list_glossaries` — Glossary(용어집) 조회 (항목 읽기/쓰기는 미지원, 실사용 사례 없음)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출
