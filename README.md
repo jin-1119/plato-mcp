@@ -84,6 +84,9 @@
 - `get_grades` — 성적 조회
 - `get_grades_access_info` — 이 계정의 성적 조회 권한 확인 (전체 열람 권한 등)
 - `list_calendar_events` — 캘린더 일정
+- `get_calendar_access_info` — 캘린더 관리 권한 확인
+- `create_calendar_event` / `delete_calendar_event` ✏️ — 개인 캘린더 일정 생성/삭제
+  (본인 소유 개인 일정만 가능, 강좌/그룹 일정은 불가)
 - `get_unread_messages` / `get_unread_notification_count` — 안 읽은 쪽지 (⚠️ PLATO는 1:1
   메시징/대화 기능이 사이트 전체에서 비활성화되어 있음 — 알림만 동작)
 - `get_course_completion_status` — 강좌 단위 이수 현황 (이수 기준이 설정된 강좌만)

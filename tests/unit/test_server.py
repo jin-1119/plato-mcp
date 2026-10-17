@@ -50,6 +50,10 @@ EXPECTED_TOOLS = {
     "get_recent_courses",
     # Phase 7 (issue #87)
     "get_unread_notification_count",
+    # Phase 7 (issue #90)
+    "get_calendar_access_info",
+    "create_calendar_event",
+    "delete_calendar_event",
 }
 
 
