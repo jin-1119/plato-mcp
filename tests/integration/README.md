@@ -294,6 +294,29 @@ No new tools from this issue -- documentation-only, as its own acceptance criter
       built. `mod_zoom_get_state` attempted live with a fake id: `invalidparameter` (real
       shape not determined, not pursued -- no real module to verify a guess against anyway)
 
+## Phase 7 checklist (issue #92 -- other content modules, redundancy audit)
+
+No new tools from this issue -- confirmed redundant with `get_course_contents`, as its own
+acceptance criteria expected to check for.
+
+- [x] `mod_url_get_urls_by_courses` — **diffed against a real response** (course 12932, the
+      one real `url` module on this account, "설문조사"/survey). The type-specific function
+      returns `externalurl` (a Google Forms link); `get_course_contents`'s generic
+      `contents[].fileurl` for the same module already returns the exact same URL. Confirmed
+      redundant
+- [x] `mod_resource_get_resources_by_courses`/`get_folders_by_courses`/`get_pages_by_courses`/
+      `get_books_by_courses`/`get_labels_by_courses`/`get_imscps_by_courses` — all verified
+      live against real courses: correctly empty (none of these module types exist in any
+      real course on this account). Given the `url` diff above already proved the generic
+      path carries the same data for a sibling content module, these are presumed equally
+      redundant rather than re-diffed one-by-one with no real instance to diff against
+- [ ] `mod_lti_get_ltis_by_courses`/`get_tool_launch_data` — verified live: `{"ltis": [],
+      "warnings": []}` (no LTI module on this account). `get_tool_launch_data` (which returns
+      a signed launch URL NOT present in the generic contents path) could not be verified --
+      no real LTI instance exists. Flagged unverified, same caveat pattern as
+      AssignmentSummary before a real assignment existed -- re-check if an LTI module ever
+      appears, since this is the one function in scope actually expected to NOT be redundant
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
