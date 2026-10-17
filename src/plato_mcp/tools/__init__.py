@@ -10,6 +10,7 @@ from . import (
     downloads,
     forum,
     grades,
+    lesson,
     messages,
     notices_qna,
     quiz,
@@ -33,3 +34,4 @@ def register_all(mcp) -> None:
     course_lookup.register(mcp)
     blocks.register(mcp)
     video_conference.register(mcp)
+    lesson.register(mcp)
