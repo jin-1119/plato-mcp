@@ -823,3 +823,15 @@ class CourseModuleInfo(BaseModel):
     instance: int
     section: int | None = None
     sectionnum: int | None = None
+
+
+class CalendarAccessInfo(BaseModel):
+    """Result of core_calendar_get_calendar_access_information (issue #90)
+    -- confirmed live: a student account can manage its own personal
+    entries (canmanageownentries=True) but not course/group entries."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    canmanageentries: bool = False
+    canmanageownentries: bool = False
+    canmanagegroupentries: bool = False

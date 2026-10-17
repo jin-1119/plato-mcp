@@ -207,6 +207,25 @@ Run against a real PLATO account with at least one enrolled course.
 - [ ] No tools built for conversation read/send/contacts (#87/#104/#105) -- there is nothing to
       build. Re-verify if PLATO ever enables site messaging.
 
+## Phase 7 checklist (issue #90 -- calendar write)
+
+- [x] `core_calendar_get_allowed_event_types` — verified live: `{"allowedeventtypes": ["user"]}`
+      -- a student account can only create personal events. Not wired as its own tool (fixed
+      answer), documented in create_calendar_event's docstring
+- [x] `core_calendar_get_calendar_access_information` — verified live:
+      `canmanageownentries=True`, `canmanagegroupentries=False`. Wired as
+      `get_calendar_access_info`
+- [x] `core_calendar_get_calendar_export_token` — verified live, mints a real export credential.
+      Deliberately NOT exposed as a tool (token-exposure concern, same as files.py's
+      TOKEN_IN_URL_WARNING)
+- [x] `core_calendar_create_calendar_events`/`delete_calendar_events` — **full round-trip
+      verified live**: created a real personal event, confirmed it via list_calendar_events,
+      deleted it, confirmed removal. Wired as `create_calendar_event`/`delete_calendar_event`
+- [x] `get_calendar_day_view`/`get_calendar_monthly_view`/`get_calendar_upcoming_view`/
+      `get_calendar_event_by_id` — skipped as redundant with the already-implemented
+      `list_calendar_events` for this account's actual calendar usage (no group/category
+      events observed)
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
