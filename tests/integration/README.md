@@ -483,6 +483,31 @@ No new tools -- competency frameworks confirmed unavailable on this platform.
       problem. The remaining 15 functions (user competency summaries, evidence pages, grading)
       were not individually probed given this -- all depend on frameworks that don't exist here
 
+## Phase 7 checklist (issue #115 -- site policy, data privacy, xAPI, H5P internals)
+
+No new tools from this issue. Read-only functions called live (write families
+deliberately NOT invoked, per this issue's own verification steps):
+
+- [x] `tool_policy_get_user_acceptances` — verified live: `{"policies": [], "warnings": []}`
+      (no policies configured requiring tracked acceptance for this account). Skipped, no data
+- [x] `tool_dataprivacy_get_access_information` — verified live: `invalidparameter` on a
+      minimal call
+- [x] `tool_dataprivacy_get_data_requests` — verified live: `privacyofficeronly` ("개인정보
+      보호 담당자 역할이 할당된 사용자만 접근 가능") -- confirmed this is restricted even for
+      read access to a role this student account doesn't have
+- [x] **Explicit decision, as required**: `tool_dataprivacy_create_data_request`/
+      `cancel_data_request` — NOT exposed as a tool. An AI assistant should not file or cancel
+      a GDPR/개인정보 data request on a user's behalf; that is a decision requiring the human's
+      own deliberate action, not something to delegate
+- [x] **Explicit decision, as required**: `tool_policy_set_acceptances_status` — NOT exposed.
+      An AI should not accept legal/site policies on a user's behalf (same reasoning as #96's
+      `agree_site_policy` decision)
+- [x] `core_xapi_get_state` — verified live: `invalidparameter` on a minimal call, confirming
+      this is internal activity-tracking plumbing with no meaningful standalone call shape
+- [x] `core_h5p_get_trusted_h5p_file` — verified live: correctly handles an invalid H5P URL
+      (`{"files": [], "warnings": [...]}`, not an exception) -- no real H5P content exists on
+      this account to test a valid URL against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
