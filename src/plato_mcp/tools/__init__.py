@@ -14,6 +14,7 @@ from . import (
     forum,
     glossary,
     grades,
+    groups,
     lesson,
     messages,
     notices_qna,
@@ -51,3 +52,4 @@ def register_all(mcp) -> None:
     database_activity.register(mcp)
     wiki_chat.register(mcp)
     user_profile.register(mcp)
+    groups.register(mcp)

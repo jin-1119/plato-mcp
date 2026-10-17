@@ -95,6 +95,8 @@
 - `get_private_files_info` / `add_private_file` ✏️ — 개인파일 영역 조회/업로드 (⚠️ 삭제
   도구 없음, 실제 삭제는 PLATO 웹에서)
 - `get_user_preferences` — 사용자 환경설정 조회 (대부분 내부 UI 상태값)
+- `get_my_course_groups` — 강좌 내 소속 그룹 조회
+- `get_enrolled_users` — 강좌 수강생 명단 조회 (PLATO 참가자 목록과 동일 정보)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출

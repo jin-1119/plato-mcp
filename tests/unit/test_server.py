@@ -83,6 +83,9 @@ EXPECTED_TOOLS = {
     "get_private_files_info",
     "get_user_preferences",
     "add_private_file",
+    # Phase 7 (issue #97)
+    "get_my_course_groups",
+    "get_enrolled_users",
 }
 
 

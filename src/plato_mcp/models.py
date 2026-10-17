@@ -1094,3 +1094,37 @@ class PrivateFilesInfo(BaseModel):
     filecount: int = 0
     foldercount: int = 0
     filesize: int = 0
+
+
+class CourseGroup(BaseModel):
+    """Result of core_group_get_course_user_groups (issue #97) --
+    confirmed live (empty for this account, no groups configured in its
+    real courses)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    name: str
+    description: str | None = None
+
+
+class EnrolledUserRole(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    roleid: int
+    shortname: str | None = None
+
+
+class EnrolledUser(BaseModel):
+    """One row from core_enrol_get_enrolled_users (issue #97) -- real
+    classmate names, confirmed live. This is the same participant-list
+    data already visible in PLATO's own course UI to any enrolled
+    student, not a new exposure -- but still real personal data, so
+    treated with the same care as other classmate-content fields (see
+    docs/pii_review.md)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    fullname: str
+    roles: list[EnrolledUserRole] = Field(default_factory=list)
