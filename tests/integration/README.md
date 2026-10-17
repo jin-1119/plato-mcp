@@ -317,6 +317,14 @@ acceptance criteria expected to check for.
       AssignmentSummary before a real assignment existed -- re-check if an LTI module ever
       appears, since this is the one function in scope actually expected to NOT be redundant
 
+## Phase 7 checklist (issue #93 -- mod_lesson)
+
+- [x] `mod_lesson_get_lessons_by_courses` — verified live: correctly returns `{"lessons": [],
+      "warnings": []}` (no mod_lesson on this account). Wired as `list_lessons`
+- [ ] The remaining 16 functions (lesson detail, pages, user attempts/grades/timers, and the
+      attempt-flow writes) -- not built, no real lesson to verify any schema or write flow
+      against. Same reasoning as mod_quiz (#85)
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

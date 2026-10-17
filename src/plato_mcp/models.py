@@ -875,3 +875,22 @@ class VideoConference(BaseModel):
     course: int
     name: str
     intro: str | None = None
+
+
+class LessonSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_lesson external API source -- NOT
+    yet verified against a live response. mod_lesson is not present in
+    any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_lessons itself IS live-verified (correctly
+    empty). Re-check field names once a course with a real lesson
+    exists, same caveat pattern as AssignmentSummary before a real
+    assignment existed."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+    timelimit: int | None = None
+    maxattempts: int | None = None
