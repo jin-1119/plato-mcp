@@ -78,6 +78,8 @@
 - `get_recent_courses` — 최근 접속한 강좌 목록
 - `get_recent_items` — 최근 열어본 강의자료/활동 목록 (강좌 단위가 아닌 모듈 단위)
 - `get_starred_courses` — 즐겨찾기한 강좌 목록
+- `list_video_conferences` — 화상강의(BigBlueButton) 조회 (참여 기능은 미지원, 실사용
+  사례 없는 forward-looking 기능)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출

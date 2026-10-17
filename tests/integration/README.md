@@ -285,6 +285,15 @@ No new tools from this issue -- documentation-only, as its own acceptance criter
 - [x] `message_airnotifier_*` (4 functions) — verified live: `is_system_configured` returns `0`
       (push notifications not set up on this platform at all). Skipped
 
+## Phase 7 checklist (issue #91 -- video conference)
+
+- [x] `mod_bigbluebuttonbn_get_bigbluebuttonbns_by_courses` — verified live: correctly returns
+      `{"bigbluebuttonbns": [], "warnings": []}` (no real BBB module on this account). Wired as
+      `list_video_conferences`
+- [ ] `get_join_url`/`can_join`/`meeting_info` (BBB), `mod_zoom_get_state` — schema-only/not
+      built. `mod_zoom_get_state` attempted live with a fake id: `invalidparameter` (real
+      shape not determined, not pursued -- no real module to verify a guess against anyway)
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
