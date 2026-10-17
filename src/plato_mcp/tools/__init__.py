@@ -8,6 +8,7 @@ from . import (
     courses,
     dashboard,
     downloads,
+    feedback,
     forum,
     grades,
     lesson,
@@ -37,3 +38,4 @@ def register_all(mcp) -> None:
     video_conference.register(mcp)
     lesson.register(mcp)
     workshop.register(mcp)
+    feedback.register(mcp)

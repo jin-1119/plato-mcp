@@ -334,6 +334,13 @@ acceptance criteria expected to check for.
       assessment writes) -- not built, no real workshop to verify any schema or write flow
       against
 
+## Phase 7 checklist (issue #106 -- mod_feedback)
+
+- [x] `mod_feedback_get_feedbacks_by_courses` — verified live: correctly returns
+      `{"feedbacks": [], "warnings": []}`. Wired as `list_feedbacks`
+- [ ] Remaining 13 functions (items, analysis, responses, submission writes) -- not built, no
+      real feedback activity to verify against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
