@@ -351,19 +351,19 @@ This is the durable artifact issue #99 (closing out epic #83) exists to produce 
 | `mod_page_get_pages_by_courses` | Redundant | #92 | same data already in get_course_contents (diffed against real mod_url response) |
 | `mod_page_view_page` | Not wired (view-logging) | #100/#103/#96 | mutates server-side viewed/completion state as a side effect of an AI read |
 | `mod_quiz_get_attempt_access_information` | Not built (no real quiz) | #85 | no real quiz to verify against |
-| `mod_quiz_get_attempt_data` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_attempt_review` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_attempt_summary` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_combined_review_options` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_quiz_access_information` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_quiz_feedback_for_grade` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_get_quiz_required_qtypes` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
+| `mod_quiz_get_attempt_data` | Implemented (unverified response shape) | #85 | wired, but response shape fully UNVERIFIED -- needs a real attempt id |
+| `mod_quiz_get_attempt_review` | Implemented (unverified response shape) | #85 | wired, but response shape fully UNVERIFIED -- needs a real attempt id |
+| `mod_quiz_get_attempt_summary` | Implemented (unverified response shape) | #85 | wired, but response shape fully UNVERIFIED -- needs a real attempt id |
+| `mod_quiz_get_combined_review_options` | Implemented (unverified response shape) | #85 | parameter name confirmed live (progressed to DB lookup, not invalidparameter) |
+| `mod_quiz_get_quiz_access_information` | Implemented (unverified response shape) | #85 | parameter name confirmed live (progressed to DB lookup, not invalidparameter) |
+| `mod_quiz_get_quiz_feedback_for_grade` | Implemented (unverified response shape) | #85 | parameter name confirmed live (progressed to DB lookup, not invalidparameter) |
+| `mod_quiz_get_quiz_required_qtypes` | Implemented (unverified response shape) | #85 | parameter name confirmed live (progressed to DB lookup, not invalidparameter) |
 | `mod_quiz_get_quizzes_by_courses` | Implemented | - | wired into a plato-mcp tool |
 | `mod_quiz_get_user_attempts` | Implemented | - | wired into a plato-mcp tool |
 | `mod_quiz_get_user_best_grade` | Implemented | - | wired into a plato-mcp tool |
-| `mod_quiz_process_attempt` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_save_attempt` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
-| `mod_quiz_start_attempt` | Not built (no real quiz) | #85 | attempt-taking deliberately deferred, no real instance to verify against |
+| `mod_quiz_process_attempt` | Implemented (unverified response shape) | #85 | wired, but response shape fully UNVERIFIED -- needs a real attempt id |
+| `mod_quiz_save_attempt` | Implemented (unverified response shape) | #85 | wired, but response shape fully UNVERIFIED -- needs a real attempt id |
+| `mod_quiz_start_attempt` | Implemented (unverified response shape) | #85 | parameter name confirmed live (progressed to DB lookup, not invalidparameter) |
 | `mod_quiz_view_attempt` | Not wired (view-logging) | #100/#103/#96 | mutates server-side viewed/completion state as a side effect of an AI read |
 | `mod_quiz_view_attempt_review` | Not wired (view-logging) | #100/#103/#96 | mutates server-side viewed/completion state as a side effect of an AI read |
 | `mod_quiz_view_attempt_summary` | Not wired (view-logging) | #100/#103/#96 | mutates server-side viewed/completion state as a side effect of an AI read |

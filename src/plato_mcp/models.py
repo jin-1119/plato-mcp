@@ -707,6 +707,131 @@ class QuizBestGrade(BaseModel):
     gradetopass: float | None = None
 
 
+class QuizAccessInformation(BaseModel):
+    """Result of mod_quiz_get_quiz_access_information -- schema-only,
+    reconstructed from Moodle 4.5's mod_quiz external API source. NEVER
+    verified against a live response -- no real quiz exists on this
+    account (issue #85, extended by explicit user decision to build the
+    attempt flow anyway, since other PNU courses/semesters may use
+    quizzes even though none currently do). Field names/shape should be
+    re-checked against a real response the first time this is actually
+    used."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    canattempt: bool = False
+    canmanage: bool = False
+    canpreview: bool = False
+    canreviewmyattempts: bool = False
+    canviewreports: bool = False
+    accessrules: list[str] = Field(default_factory=list)
+    preventaccessreasons: list[str] = Field(
+        default_factory=list,
+        description="Human-readable reasons attempting is currently blocked, if any.",
+    )
+
+
+class QuizAttemptHandle(BaseModel):
+    """The `attempt` object returned by mod_quiz_start_attempt -- schema-only,
+    UNVERIFIED (see QuizAccessInformation's docstring)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    quiz: int
+    attempt: int
+    state: str
+    currentpage: int | None = None
+    timestart: datetime | None = None
+    sumgrades: float | None = None
+
+    @field_validator("timestart", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)
+
+
+class QuizAttemptQuestion(BaseModel):
+    """One question slot, as returned by mod_quiz_get_attempt_data/
+    get_attempt_summary/get_attempt_review -- schema-only, UNVERIFIED.
+
+    `html` is Moodle's server-rendered question form (the same markup a
+    browser would show) -- this is the actual answer-field names/types an
+    AI caller needs to parse to build the `responses` dict for
+    process_quiz_attempt, since Moodle's own API does not return a
+    clean structured "question text + answer options" shape separately
+    from this HTML. This is the central reason attempt-taking was
+    originally deferred (issue #85): there is no real quiz on this
+    account to confirm what this HTML actually looks like, or whether
+    the field-name-guessing approach a caller would need actually works."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    slot: int
+    type: str | None = Field(default=None, description="Question type, e.g. 'multichoice'.")
+    page: int | None = None
+    html: str | None = Field(
+        default=None, description="Server-rendered question form -- parse for answer field names."
+    )
+    sequencecheck: int | None = Field(
+        default=None,
+        description="Must be echoed back exactly in the next save/process call for this slot.",
+    )
+    flagged: bool | None = None
+    mark: float | None = None
+    maxmark: float | None = None
+
+
+class QuizAttemptData(BaseModel):
+    """Result of mod_quiz_get_attempt_data -- schema-only, UNVERIFIED."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    questions: list[QuizAttemptQuestion] = Field(default_factory=list)
+    nextpage: int | None = None
+
+
+class QuizAttemptSummary(BaseModel):
+    """Result of mod_quiz_get_attempt_summary -- schema-only, UNVERIFIED."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    questions: list[QuizAttemptQuestion] = Field(default_factory=list)
+    totalunanswered: int | None = None
+
+
+class QuizAttemptReview(BaseModel):
+    """Result of mod_quiz_get_attempt_review -- schema-only, UNVERIFIED."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    grade: str | None = None
+    questions: list[QuizAttemptQuestion] = Field(default_factory=list)
+
+
+class QuizReviewOptions(BaseModel):
+    """Flattened view of mod_quiz_get_combined_review_options's
+    `someoptions`/`alloptions` name/value pairs -- schema-only, UNVERIFIED."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    marks: bool = False
+    feedback: bool = False
+    generalfeedback: bool = False
+    rightanswer: bool = False
+    overallfeedback: bool = False
+
+
+class QuizFeedbackForGrade(BaseModel):
+    """Result of mod_quiz_get_quiz_feedback_for_grade -- schema-only,
+    UNVERIFIED."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    feedbacktext: str | None = None
+    feedbacktextformat: int | None = None
+
+
 class ForumSummary(BaseModel):
     """Schema based on Moodle 4.5's mod_forum external API source -- NOT
     yet verified against a live response (no course on this account uses

@@ -101,12 +101,31 @@ Run against a real PLATO account with at least one enrolled course.
 
 - [x] `mod_quiz_get_quizzes_by_courses` — verified live against real courses: correctly returns
       `{"quizzes": [], "warnings": []}` (no course on this account has ever had a real quiz)
-- [ ] `mod_quiz_get_user_attempts`/`get_user_best_grade` — schema-only (unit tests against
+- [x] `mod_quiz_get_user_attempts`/`get_user_best_grade` — schema-only (unit tests against
       documented Moodle 4.5 shape), never exercised against a real quizid -- same caveat
       `AssignmentSummary` had before a real assignment existed
-- [ ] Attempt-taking (start/answer/submit/review) — **deliberately not implemented.** Needs a
-      real quiz to verify the multi-step write flow against; see `tools/quiz.py`'s module
-      docstring for the full reasoning.
+
+### Reopened: attempt-taking flow built per explicit user decision (2026-10-17)
+
+Originally deferred (no real quiz to verify the multi-step write flow against). User decided to
+build it anyway since other PNU professors/courses may use quizzes even though none currently do.
+
+- [x] `get_quiz_access_information`/`get_quiz_required_qtypes`/`get_quiz_feedback_for_grade`/
+      `get_combined_review_options` — **parameter names confirmed live**: called each with a
+      fake `quizid=1` and got `dml_missing_record_exception`/`invalidrecord` ("no such quiz"),
+      NOT an `invalidparameter` error -- meaning the server accepted the request shape and
+      progressed to the database lookup. This confirms the parameter names are right; the
+      *response* shape when a real quiz exists is still schema-only/unverified
+- [x] `mod_quiz_start_attempt` — same confirmation (parameter name accepted, no real quiz to
+      start an attempt against)
+- [ ] `get_attempt_data`/`get_attempt_summary`/`get_attempt_review`/`save_attempt`/
+      `process_attempt` — fully schema-only and UNVERIFIED, since these all need a real
+      *attempt id* (which only exists after a real `start_attempt` against a real quiz, which
+      doesn't exist here). The biggest open risk: `get_attempt_data`'s question `html` is
+      Moodle's own rendered question form, not structured data -- whether an AI caller can
+      actually parse real question-form field names out of that HTML has never been tested.
+      **Re-verify this entire flow end to end the first time a real quiz is reachable from this
+      account**, before trusting it for anything that matters (a graded attempt).
 
 ## Phase 7 checklist (issue #86 -- forum support)
 

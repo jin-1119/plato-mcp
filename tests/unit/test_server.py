@@ -28,10 +28,20 @@ EXPECTED_TOOLS = {
     "get_upcoming_action_events",
     "get_courses_by_timeline",
     "get_grades_overview",
-    # Phase 7 (issue #85)
+    # Phase 7 (issue #85, extended)
     "list_quizzes",
     "get_quiz_attempts",
     "get_quiz_best_grade",
+    "get_quiz_access_information",
+    "get_quiz_required_qtypes",
+    "get_quiz_feedback_for_grade",
+    "get_quiz_combined_review_options",
+    "start_quiz_attempt",
+    "get_quiz_attempt_data",
+    "get_quiz_attempt_summary",
+    "get_quiz_attempt_review",
+    "save_quiz_attempt_responses",
+    "process_quiz_attempt",
     # Phase 7 (issue #86)
     "list_forums",
     "get_forum_discussions",
