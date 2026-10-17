@@ -15,6 +15,7 @@ from . import (
     notices_qna,
     quiz,
     video_conference,
+    workshop,
 )
 
 
@@ -35,3 +36,4 @@ def register_all(mcp) -> None:
     blocks.register(mcp)
     video_conference.register(mcp)
     lesson.register(mcp)
+    workshop.register(mcp)

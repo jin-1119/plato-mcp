@@ -325,6 +325,15 @@ acceptance criteria expected to check for.
       attempt-flow writes) -- not built, no real lesson to verify any schema or write flow
       against. Same reasoning as mod_quiz (#85)
 
+## Phase 7 checklist (issue #94 -- mod_workshop)
+
+- [x] `mod_workshop_get_workshops_by_courses` — verified live: correctly returns
+      `{"workshops": [], "warnings": []}` (no mod_workshop on this account). Wired as
+      `list_workshops`
+- [ ] The remaining 18 functions (submissions, assessments, grades, and the submission/
+      assessment writes) -- not built, no real workshop to verify any schema or write flow
+      against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

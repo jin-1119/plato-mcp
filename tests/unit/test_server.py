@@ -61,6 +61,8 @@ EXPECTED_TOOLS = {
     "list_video_conferences",
     # Phase 7 (issue #93)
     "list_lessons",
+    # Phase 7 (issue #94)
+    "list_workshops",
 }
 
 
