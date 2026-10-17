@@ -341,6 +341,15 @@ acceptance criteria expected to check for.
 - [ ] Remaining 13 functions (items, analysis, responses, submission writes) -- not built, no
       real feedback activity to verify against
 
+## Phase 7 checklist (issue #107 -- mod_choice and mod_survey)
+
+- [x] `mod_choice_get_choices_by_courses` — verified live: correctly returns
+      `{"choices": [], "warnings": []}`. Wired as `list_choices`
+- [x] `mod_survey_get_surveys_by_courses` — verified live: correctly returns
+      `{"surveys": [], "warnings": []}`. Wired as `list_surveys`
+- [ ] Remaining functions (options/questions, results, submit_choice_response/submit_answers)
+      -- not built, no real instance to verify against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

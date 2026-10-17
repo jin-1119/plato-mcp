@@ -932,3 +932,33 @@ class FeedbackSummary(BaseModel):
     name: str
     intro: str | None = None
     anonymous: int | None = None
+
+
+class ChoiceSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_choice external API source -- NOT
+    yet verified against a live response. mod_choice is not present in
+    any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_choices itself IS live-verified (correctly
+    empty)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+
+
+class SurveySummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_survey external API source -- NOT
+    yet verified against a live response. mod_survey is not present in
+    any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_surveys itself IS live-verified (correctly
+    empty)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None

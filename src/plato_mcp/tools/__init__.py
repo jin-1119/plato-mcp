@@ -2,6 +2,7 @@ from . import (
     assignments,
     blocks,
     calendar,
+    choice_survey,
     completion,
     course_lookup,
     course_updates,
@@ -39,3 +40,4 @@ def register_all(mcp) -> None:
     lesson.register(mcp)
     workshop.register(mcp)
     feedback.register(mcp)
+    choice_survey.register(mcp)
