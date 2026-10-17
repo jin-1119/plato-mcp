@@ -89,6 +89,8 @@
   미지원, 실사용 사례 없음)
 - `list_glossaries` — Glossary(용어집) 조회 (항목 읽기/쓰기는 미지원, 실사용 사례 없음)
 - `list_database_activities` — Database 활동 조회 (항목 읽기/쓰기는 미지원, 실사용 사례 없음)
+- `list_wikis` / `list_chats` — Wiki/실시간 채팅 활동 조회 (읽기/쓰기는 미지원, 실사용
+  사례 없음)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출

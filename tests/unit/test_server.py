@@ -75,6 +75,9 @@ EXPECTED_TOOLS = {
     "list_glossaries",
     # Phase 7 (issue #110)
     "list_database_activities",
+    # Phase 7 (issue #111)
+    "list_wikis",
+    "list_chats",
 }
 
 
