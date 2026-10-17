@@ -226,6 +226,43 @@ Run against a real PLATO account with at least one enrolled course.
       `list_calendar_events` for this account's actual calendar usage (no group/category
       events observed)
 
+## Phase 7 checklist (issue #113 -- tool_mobile and miscellaneous core internals)
+
+No new tools from this issue -- documentation-only, as its own acceptance criteria expected.
+
+- [x] `tool_mobile_get_config`/`get_public_config`/`get_plugins_supporting_mobile` — verified
+      live: site/app configuration data (site name, login settings, installed plugin list),
+      not user data. Skipped, no AI-assistant use case
+- [x] **`tool_mobile_call_external_functions` (batching) -- evaluated with a real measurement**:
+      batched 2 real calls (`mod_assign_get_assignments` + `mod_assign_get_submission_status`)
+      into one HTTP request live and timed both paths: sequential ~0.95s, batched ~0.56s (~40%
+      faster for 2 calls). The response wraps each result as a JSON-encoded *string* in
+      `responses[].data` (needs an extra `json.loads`, not a plain nested object) -- a real
+      wire-format detail any future implementation would need to handle. **Decision: worth
+      adopting as a future `MoodleClient` optimization (e.g. batching
+      get_assignment_detail_for's two sequential calls), but implementing it is a separate,
+      deliberate refactor with its own regression risk -- out of scope for this
+      audit-and-decide issue. Tracked as a documented opportunity, not built now.**
+- [x] `tool_mobile_get_autologin_key`/`get_tokens_for_qr_login`/`validate_subscription_key` --
+      **security decision: do not expose.** Live-tested (errors with `invalidparameter` on a
+      minimal call -- needs additional params not pursued, since the decision is to skip
+      regardless of whether they'd succeed). These mint session/login credentials; per the
+      existing wstoken-scope finding (files.py's TOKEN_IN_URL_WARNING, confirmed in #56 that a
+      token authenticates arbitrary API calls), exposing credential-minting functions to an AI
+      caller is a straightforward security regression, not a feature
+- [x] `core_filters_get_available_in_context`/`core_get_component_strings` — verified live:
+      `invalidparameter` on a minimal call (both need context-specific params); even if called
+      correctly, both return UI-string/filter-config plumbing, not useful standalone. Skipped
+- [x] `core_table_get_dynamic_table_content`/`core_my_view_page`/`core_question_update_flag` --
+      not called (all three require implementation-specific context -- a table handler class
+      name, a My Moodle block instance, a question-attempt id -- that only make sense from
+      inside Moodle's own UI, not as a standalone AI tool call). Skipped as not independently
+      meaningful
+- [x] `tool_analytics_potential_contexts` — verified live: `nopermissions` ("모델 관리" =
+      model management). Confirmed admin-only
+- [x] `tool_moodlenet_verify_webfinger`/`search_courses` — verified live: `invalidparameter`.
+      MoodleNet federation/discovery feature, no real use case on this platform. Skipped
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
