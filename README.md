@@ -81,6 +81,7 @@
 - `list_video_conferences` — 화상강의(BigBlueButton) 조회 (참여 기능은 미지원, 실사용
   사례 없는 forward-looking 기능)
 - `list_lessons` — Lesson 활동 조회 (응시 기능은 미지원, 실사용 사례 없음)
+- `list_workshops` — Workshop(상호평가) 활동 조회 (제출/평가 기능은 미지원, 실사용 사례 없음)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출
