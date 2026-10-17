@@ -54,6 +54,9 @@ EXPECTED_TOOLS = {
     "get_calendar_access_info",
     "create_calendar_event",
     "delete_calendar_event",
+    # Phase 7 (issue #116)
+    "get_recent_items",
+    "get_starred_courses",
 }
 
 

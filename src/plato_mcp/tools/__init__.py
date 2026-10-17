@@ -1,5 +1,6 @@
 from . import (
     assignments,
+    blocks,
     calendar,
     completion,
     course_lookup,
@@ -29,3 +30,4 @@ def register_all(mcp) -> None:
     forum.register(mcp)
     course_updates.register(mcp)
     course_lookup.register(mcp)
+    blocks.register(mcp)

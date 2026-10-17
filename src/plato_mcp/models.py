@@ -835,3 +835,26 @@ class CalendarAccessInfo(BaseModel):
     canmanageentries: bool = False
     canmanageownentries: bool = False
     canmanagegroupentries: bool = False
+
+
+class RecentItem(BaseModel):
+    """One row from block_recentlyaccesseditems_get_recent_items (issue
+    #116) -- confirmed live, returns real recently-accessed modules
+    across courses, each with a direct view URL."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    courseid: int
+    cmid: int
+    modname: str
+    name: str
+    coursename: str
+    timeaccess: datetime | None = None
+    viewurl: str | None = None
+    courseviewurl: str | None = None
+
+    @field_validator("timeaccess", mode="before")
+    @classmethod
+    def _convert_epoch(cls, v: int | None) -> datetime | None:
+        return _epoch_to_datetime(v)

@@ -263,6 +263,28 @@ No new tools from this issue -- documentation-only, as its own acceptance criter
 - [x] `tool_moodlenet_verify_webfinger`/`search_courses` — verified live: `invalidparameter`.
       MoodleNet federation/discovery feature, no real use case on this platform. Skipped
 
+## Phase 7 checklist (issue #116 -- blocks, AI placement, notification devices)
+
+- [x] `block_recentlyaccesseditems_get_recent_items` — verified live: 9 real recently-accessed
+      modules with direct view URLs. Wired as `get_recent_items`
+- [x] `block_starredcourses_get_starred_courses` — verified live: `[]` (no starred courses, a
+      valid empty state). Wired as `get_starred_courses`
+- [x] `message_popup_get_popup_notifications` — verified live, compared against
+      `get_unread_messages`: same underlying notification (a real assignment-due reminder
+      appeared in both), richer HTML fields but no new information. Documented as redundant,
+      no second tool built
+- [x] `core_block_get_dashboard_blocks`/`get_course_blocks`/`fetch_addable_blocks` — verified
+      live: UI layout data (which blocks are docked where). Skipped, not useful standalone
+- [x] `aiplacement_*`/`core_ai_*` — the irony noted in the issue is real: PLATO exposes
+      Moodle 4.5's own built-in AI text/image generation. **Documented decision: plato-mcp does
+      NOT proxy another LMS's AI features** -- an MCP tool that itself calls a different AI is
+      a confusing indirection with no clear benefit over the calling AI doing the work directly.
+      Not wired, regardless of the exact live parameter shape (both tested functions errored
+      `invalidparameter` on a minimal call; not pursued further since the decision doesn't
+      depend on them working)
+- [x] `message_airnotifier_*` (4 functions) — verified live: `is_system_configured` returns `0`
+      (push notifications not set up on this platform at all). Skipped
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

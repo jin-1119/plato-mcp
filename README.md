@@ -76,6 +76,8 @@
 - `get_course_module` — cmid로 모듈 직접 조회
 - `search_courses` — PLATO 전체 강좌 카탈로그 검색 (수강 중인 강좌만이 아님)
 - `get_recent_courses` — 최근 접속한 강좌 목록
+- `get_recent_items` — 최근 열어본 강의자료/활동 목록 (강좌 단위가 아닌 모듈 단위)
+- `get_starred_courses` — 즐겨찾기한 강좌 목록
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출
