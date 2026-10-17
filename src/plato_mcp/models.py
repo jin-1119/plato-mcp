@@ -962,3 +962,33 @@ class SurveySummary(BaseModel):
     course: int
     name: str
     intro: str | None = None
+
+
+class ScormSummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_scorm external API source -- NOT
+    yet verified against a live response. mod_scorm is not present in
+    any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_scorms itself IS live-verified (correctly
+    empty)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
+
+
+class H5pActivitySummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_h5pactivity external API source
+    -- NOT yet verified against a live response. mod_h5pactivity is not
+    present in any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_h5p_activities itself IS live-verified
+    (correctly empty)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
