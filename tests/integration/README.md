@@ -358,6 +358,13 @@ acceptance criteria expected to check for.
 - [ ] Remaining functions (SCOs/tracks/attempts, results, tracking-data writes) -- not built,
       no real instance to verify against
 
+## Phase 7 checklist (issue #109 -- mod_glossary)
+
+- [x] `mod_glossary_get_glossaries_by_courses` — verified live: correctly empty. Wired as
+      `list_glossaries`
+- [ ] Remaining 17 functions (entries, categories, authors, entry writes) -- not built, no real
+      glossary to verify against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

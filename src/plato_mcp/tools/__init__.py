@@ -11,6 +11,7 @@ from . import (
     downloads,
     feedback,
     forum,
+    glossary,
     grades,
     lesson,
     messages,
@@ -43,3 +44,4 @@ def register_all(mcp) -> None:
     feedback.register(mcp)
     choice_survey.register(mcp)
     scorm_h5p.register(mcp)
+    glossary.register(mcp)

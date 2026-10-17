@@ -992,3 +992,18 @@ class H5pActivitySummary(BaseModel):
     course: int
     name: str
     intro: str | None = None
+
+
+class GlossarySummary(BaseModel):
+    """Schema based on Moodle 4.5's mod_glossary external API source --
+    NOT yet verified against a live response. mod_glossary is not
+    present in any of the 11 currently enrolled real courses (live scan,
+    2026-10-17) -- list_glossaries itself IS live-verified (correctly
+    empty)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    course: int
+    name: str
+    intro: str | None = None
