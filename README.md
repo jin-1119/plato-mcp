@@ -66,6 +66,9 @@
 공식 Moodle webservice API로 동작하는 도구와, `ubboard`(공지/Q&A) HTML을 본인 세션으로
 스크레이핑하는 도구로 나뉩니다. 쓰기 도구(✏️)는 실행 전 확인 절차를 거칩니다
 (자세한 내용은 [`docs/write_confirmation_pattern.md`](./docs/write_confirmation_pattern.md)).
+PLATO가 실제로 제공하는 439개 Moodle API 함수 전체를 이 MCP가 어떻게 다뤘는지(구현/중복/
+비활성화/권한없음/미구현 사유)는 [`docs/moodle_api_coverage.md`](./docs/moodle_api_coverage.md)
+참고.
 
 **강좌 / 과제 / 성적 / 일정 / 쪽지** — 공식 API
 
