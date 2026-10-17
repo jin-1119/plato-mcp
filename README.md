@@ -118,7 +118,13 @@ PLATO가 실제로 제공하는 439개 Moodle API 함수 전체를 이 MCP가 �
 - `get_upcoming_action_events` — 마감 임박한 할 일(과제/시청 기한 등) 통합 조회
 - `get_courses_by_timeline` — 진행 중/예정/종료 강좌 필터링
 - `get_grades_overview` — 전체 강좌 종합 성적 한 번에 조회
-- `list_quizzes` / `get_quiz_attempts` / `get_quiz_best_grade` — 퀴즈 조회 (응시 기능은 미지원)
+- `list_quizzes` / `get_quiz_attempts` / `get_quiz_best_grade` — 퀴즈 조회
+- `get_quiz_access_information` / `get_quiz_required_qtypes` / `get_quiz_feedback_for_grade` /
+  `get_quiz_combined_review_options` — 퀴즈 응시 전 확인용 조회 (⚠️ 응답 형태 미검증 — 실제
+  퀴즈가 있는 강좌가 없어서 파라미터만 라이브로 확인됨)
+- `start_quiz_attempt` / `get_quiz_attempt_data` / `save_quiz_attempt_responses` /
+  `process_quiz_attempt` / `get_quiz_attempt_summary` / `get_quiz_attempt_review` ✏️ — 퀴즈
+  응시 흐름 (⚠️ 전체 미검증, 실제 퀴즈로 끝까지 테스트된 적 없음 — 사용 전 반드시 재검증 권장)
 - `list_forums` / `get_forum_discussions` / `get_discussion_posts` — 표준 Moodle 포럼 조회
   (PLATO 자체 공지/Q&A인 `ubboard`와는 다른 모듈)
 - `add_discussion` / `add_discussion_post` ✏️ — 포럼 글쓰기/답글
