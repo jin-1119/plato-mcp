@@ -425,6 +425,20 @@ acceptance criteria expected to check for.
       enrolment; no clear use case for an AI assistant to choose which courses to self-enrol
       the user into
 
+## Phase 7 checklist (issue #98 -- search and reporting)
+
+No new tools from this issue -- documentation-only.
+
+- [x] **`core_search_get_results` — major negative finding, confirmed live**: PLATO has global
+      search disabled site-wide (`{"errorcode": "globalsearchdisabled", "message": "전체 검색이
+      불가능합니다."}`). This was the function expected to be "the most plausibly useful" in
+      this issue -- it cannot work on this platform at all, regardless of account
+- [x] `core_reportbuilder_list_reports` — verified live: `{"reports": [], "warnings": []}` (no
+      custom reports configured/shared on this account). Skipped, nothing to retrieve
+- [x] `report_insights_action_executed` — verified live: `invalidparameter` on a minimal call.
+      This records a user's action on an AI-predicted insight (e.g. dismissing a
+      dropout-risk prediction) -- a teacher/analytics-dashboard concept, not pursued further
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
