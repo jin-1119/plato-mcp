@@ -68,6 +68,9 @@ EXPECTED_TOOLS = {
     # Phase 7 (issue #107)
     "list_choices",
     "list_surveys",
+    # Phase 7 (issue #108)
+    "list_scorms",
+    "list_h5p_activities",
 }
 
 

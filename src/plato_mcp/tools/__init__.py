@@ -16,6 +16,7 @@ from . import (
     messages,
     notices_qna,
     quiz,
+    scorm_h5p,
     video_conference,
     workshop,
 )
@@ -41,3 +42,4 @@ def register_all(mcp) -> None:
     workshop.register(mcp)
     feedback.register(mcp)
     choice_survey.register(mcp)
+    scorm_h5p.register(mcp)
