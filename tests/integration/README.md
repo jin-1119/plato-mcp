@@ -365,6 +365,13 @@ acceptance criteria expected to check for.
 - [ ] Remaining 17 functions (entries, categories, authors, entry writes) -- not built, no real
       glossary to verify against
 
+## Phase 7 checklist (issue #110 -- mod_data)
+
+- [x] `mod_data_get_databases_by_courses` — verified live: correctly empty. Wired as
+      `list_database_activities`
+- [ ] Remaining 10 functions (fields, entries, search, entry writes) -- not built, no real
+      database activity to verify against
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

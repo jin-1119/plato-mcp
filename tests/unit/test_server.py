@@ -73,6 +73,8 @@ EXPECTED_TOOLS = {
     "list_h5p_activities",
     # Phase 7 (issue #109)
     "list_glossaries",
+    # Phase 7 (issue #110)
+    "list_database_activities",
 }
 
 
