@@ -19,6 +19,7 @@ from . import (
     notices_qna,
     quiz,
     scorm_h5p,
+    user_profile,
     video_conference,
     wiki_chat,
     workshop,
@@ -49,3 +50,4 @@ def register_all(mcp) -> None:
     glossary.register(mcp)
     database_activity.register(mcp)
     wiki_chat.register(mcp)
+    user_profile.register(mcp)

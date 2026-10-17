@@ -78,6 +78,11 @@ EXPECTED_TOOLS = {
     # Phase 7 (issue #111)
     "list_wikis",
     "list_chats",
+    # Phase 7 (issue #96)
+    "get_user_profile",
+    "get_private_files_info",
+    "get_user_preferences",
+    "add_private_file",
 }
 
 
