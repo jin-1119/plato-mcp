@@ -91,6 +91,10 @@
 - `list_database_activities` — Database 활동 조회 (항목 읽기/쓰기는 미지원, 실사용 사례 없음)
 - `list_wikis` / `list_chats` — Wiki/실시간 채팅 활동 조회 (읽기/쓰기는 미지원, 실사용
   사례 없음)
+- `get_user_profile` — 사용자 프로필 조회 (같은 강좌 수강생만, 전체 검색 아님)
+- `get_private_files_info` / `add_private_file` ✏️ — 개인파일 영역 조회/업로드 (⚠️ 삭제
+  도구 없음, 실제 삭제는 PLATO 웹에서)
+- `get_user_preferences` — 사용자 환경설정 조회 (대부분 내부 UI 상태값)
 - `list_assignments` — 과제 목록
 - `get_assignment_detail` — 과제 상세
 - `submit_assignment` ✏️ — 과제 제출

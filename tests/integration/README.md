@@ -379,6 +379,32 @@ acceptance criteria expected to check for.
 - [ ] Remaining functions (pages/subwikis, sessions/messages, writes) -- not built, no real
       instance to verify against
 
+## Phase 7 checklist (issue #96 -- core_user profile and private files)
+
+- [x] `core_user_get_course_user_profiles` — verified live against this account's own profile
+      (course 5968). Wired as `get_user_profile`. Deliberately NOT `core_user_get_users_by_field`
+      (global lookup) -- privacy scope decision
+- [x] `core_user_get_private_files_info` — verified live (0 files/folders at the time). Wired
+      as `get_private_files_info`
+- [x] `core_user_add_user_private_files` — **full round-trip verified live, with the user's
+      explicit go-ahead**: uploaded a real file (reusing #84's MoodleClient.upload_file +
+      get_unused_draft_itemid), confirmed via get_private_files_info (filecount 0 -> 1,
+      filesize 113 matching the uploaded file). **Note: this left a real file
+      (`test_submission.txt`) in the private files area on the real account -- no delete tool
+      exists for private files yet, so it needs to be removed manually via PLATO's own UI.**
+      Wired as `add_private_file`
+- [x] `core_user_get_user_preferences` — verified live. **Real schema finding**: one preference
+      (`_lastloaded`) came back as a raw int, not a string like the others -- `UserPreference.value`
+      widened from `str | None` to `str | int | None` to handle it (caught by testing against
+      the real response, not assumed). Wired as `get_user_preferences`
+- [x] `core_user_set_user_preferences`/`update_user_preferences` — not wired, no real use case
+      for an AI to mutate Moodle's own UI state
+- [x] `core_user_get_users_by_field`/`view_user_profile`/`view_user_list` — not wired (privacy
+      scope / view-logging)
+- [x] Device registration (3 functions) — not wired, native-app-only concept
+- [x] `update_picture`/`agree_site_policy` — not wired, no AI-appropriate use case (the latter
+      specifically: an AI should not accept legal/site policies on a user's behalf)
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:

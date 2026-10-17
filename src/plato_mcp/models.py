@@ -1052,3 +1052,45 @@ class ChatSummary(BaseModel):
     course: int
     name: str
     intro: str | None = None
+
+
+class UserPreference(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    # Confirmed live: most values are strings (Moodle's generic preference
+    # store), but at least one (_lastloaded) comes back as a raw int.
+    value: str | int | None = None
+
+
+class UserProfile(BaseModel):
+    """Result of core_user_get_course_user_profiles (issue #96) --
+    course-scoped (not a global user search like get_users_by_field,
+    which was NOT wired for privacy reasons -- see tools/user_profile.py's
+    module docstring). Confirmed live against this account's own profile."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    username: str | None = None
+    fullname: str
+    email: str | None = Field(
+        default=None,
+        description="Only populated for the caller's own profile or where the course "
+        "context grants visibility -- see docs/pii_review.md.",
+    )
+    department: str | None = None
+    institution: str | None = None
+    profileimageurl: str | None = None
+    preferences: list[UserPreference] = Field(default_factory=list)
+
+
+class PrivateFilesInfo(BaseModel):
+    """Result of core_user_get_private_files_info (issue #96) -- confirmed
+    live against this account (0 files/folders at the time)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    filecount: int = 0
+    foldercount: int = 0
+    filesize: int = 0
