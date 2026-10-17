@@ -524,6 +524,23 @@ don't exist/aren't configured here:
 - [x] As anticipated in this issue's own description: moot given #86 (forum)/#109
       (glossary)/#110 (database) all confirmed no real instances on this account
 
+## Phase 7 checklist (issue #99 -- coverage table, epic #83 close-out)
+
+- [x] `docs/moodle_api_coverage.md` created, listing all 439 functions from a fresh live
+      `core_webservice_get_site_info` dump (confirmed byte-for-byte identical to the one taken
+      at epic planning time -- zero drift across the whole epic), each with status/issue/note
+- [x] Diff check: regenerated the live function list and diffed against the 439 functions the
+      coverage table covers -- **diff is empty, 0 unclassified, 53 confirmed `Implemented`**
+      (matches `test_server.py`'s `EXPECTED_TOOLS` manifest exactly: the MCP server reports 57
+      live tools, several of which wrap more than one wsfunction)
+- [x] README updated to reference the coverage doc instead of a stale tool count
+
+This closes epic #83. Summary: started at 9 wsfunctions used / 0 schema audits; ends at 53
+wsfunctions wired across 57 MCP tools, with all 439 functions this account's token can call
+individually verified live and documented -- including real site-wide platform findings
+(messaging disabled, global search disabled, badges/blog/notes disabled, competency frameworks
+unavailable) that would have been easy to get wrong by assumption instead of live testing.
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
