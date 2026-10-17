@@ -470,6 +470,19 @@ No new tools -- all three feature families confirmed disabled site-wide, live:
 All three are platform-level config, not account permissions -- confirmed nothing in this
 family can work here regardless of caller.
 
+## Phase 7 checklist (issue #114 -- learning plans and competencies)
+
+No new tools -- competency frameworks confirmed unavailable on this platform.
+
+- [x] `core_competency_list_course_competencies` — verified live: `invalidparameter` on a
+      minimal call against course 5968
+- [x] `tool_lp_data_for_plans_page` — verified live: `invalidparameter` on a minimal call
+- [x] Cross-referenced with #103's finding: `core_course_get_user_navigation_options` already
+      returned `{"name": "competencies", "available": false}` for this account -- consistent
+      with competency frameworks simply not being configured/enabled, not a parameter-shape
+      problem. The remaining 15 functions (user competency summaries, evidence pages, grading)
+      were not individually probed given this -- all depend on frameworks that don't exist here
+
 ## Phase 3 checklist (issues #26-#27)
 
 - [x] `_fetch_write_form_tokens` (GET only) — verified live against the real Q&A write form:
