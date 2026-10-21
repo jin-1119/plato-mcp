@@ -97,7 +97,9 @@ def test_submit_assignment_confirm_without_preview_is_rejected(mocker):
     client.call.return_value = {"courses": [{"id": 1, "assignments": [{"id": 1, "name": "HW"}]}]}
 
     with pytest.raises(WriteConfirmationError):
-        submit_assignment_for(client, course_id=1, assignment_id=1, text="answer", dry_run=False)
+        submit_assignment_for(
+            client, headers=None, course_id=1, assignment_id=1, text="answer", dry_run=False
+        )
 
     # Never reached the actual submission call.
     submit_calls = [
@@ -113,11 +115,11 @@ def test_submit_assignment_confirm_with_different_text_than_previewed_is_rejecte
     client.session_key = "sess-abuse-2"
     client.call.return_value = {"courses": [{"id": 1, "assignments": [{"id": 1, "name": "HW"}]}]}
 
-    submit_assignment_for(client, course_id=1, assignment_id=1, text="benign preview")
+    submit_assignment_for(client, headers=None, course_id=1, assignment_id=1, text="benign preview")
 
     with pytest.raises(WriteConfirmationError):
         submit_assignment_for(
-            client, course_id=1, assignment_id=1, text="DIFFERENT TEXT", dry_run=False
+            client, headers=None, course_id=1, assignment_id=1, text="DIFFERENT TEXT", dry_run=False
         )
 
 
@@ -154,7 +156,7 @@ def test_default_preview_tracker_is_the_one_actually_used_by_the_tools(mocker):
     client.session_key = "sess-abuse-4"
     client.call.return_value = {"courses": [{"id": 1, "assignments": [{"id": 1, "name": "HW"}]}]}
 
-    submit_assignment_for(client, course_id=1, assignment_id=1, text="answer")
+    submit_assignment_for(client, headers=None, course_id=1, assignment_id=1, text="answer")
 
     # If this were a different tracker instance, this direct check would fail.
     # file_paths is part of the hashed key as of issue #84 (so a confirm has to
@@ -162,5 +164,11 @@ def test_default_preview_tracker_is_the_one_actually_used_by_the_tools(mocker):
     default_preview_tracker.require_previewed(
         "sess-abuse-4",
         "submit_assignment",
-        {"course_id": 1, "assignment_id": 1, "text": "answer", "file_paths": []},
+        {
+            "course_id": 1,
+            "assignment_id": 1,
+            "text": "answer",
+            "file_paths": [],
+            "file_contents": [],
+        },
     )
