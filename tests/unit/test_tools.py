@@ -6,12 +6,15 @@ plumbing for the session key (see context.py) and isn't part of the
 business logic being tested here.
 """
 
+import base64
+import hashlib
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from plato_mcp.errors import MoodleAPIError, PlatoMCPError
 from plato_mcp.tools.assignments import (
+    InlineFileUpload,
     get_assignment_detail_for,
     list_assignments_for,
     remove_submission_for,
@@ -355,7 +358,9 @@ def test_submit_assignment_for_dry_run_does_not_call_save_submission(mock_client
         "courses": [{"id": 6253, "assignments": [{"id": 1, "name": "HW1"}]}]
     }
 
-    result = submit_assignment_for(mock_client, course_id=6253, assignment_id=1, text="my answer")
+    result = submit_assignment_for(
+        mock_client, headers=None, course_id=6253, assignment_id=1, text="my answer"
+    )
 
     assert result.dry_run is True
     assert result.executed is False
@@ -375,9 +380,11 @@ def test_submit_assignment_for_real_run_calls_save_submission(mock_client):
     mock_client.call.side_effect = fake_call
 
     # dry_run=False now requires a matching preview first (issue #37).
-    submit_assignment_for(mock_client, course_id=6253, assignment_id=1, text="my answer")
+    submit_assignment_for(
+        mock_client, headers=None, course_id=6253, assignment_id=1, text="my answer"
+    )
     result = submit_assignment_for(
-        mock_client, course_id=6253, assignment_id=1, text="my answer", dry_run=False
+        mock_client, headers=None, course_id=6253, assignment_id=1, text="my answer", dry_run=False
     )
 
     assert result.dry_run is False
@@ -394,7 +401,9 @@ def test_submit_assignment_for_real_run_calls_save_submission(mock_client):
 def test_submit_assignment_for_unknown_id_raises(mock_client):
     mock_client.call.return_value = {"courses": [{"id": 6253, "assignments": []}]}
     with pytest.raises(ValueError):
-        submit_assignment_for(mock_client, course_id=6253, assignment_id=999, text="x")
+        submit_assignment_for(
+            mock_client, headers=None, course_id=6253, assignment_id=999, text="x"
+        )
 
 
 # configs shape taken verbatim from a real live mod_assign_get_assignments
@@ -430,7 +439,7 @@ def test_submit_assignment_for_file_dry_run_previews_without_uploading(mock_clie
     f.write_bytes(b"%PDF-1.4 fake pdf content")
 
     result = submit_assignment_for(
-        mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)]
+        mock_client, headers=None, course_id=5968, assignment_id=4975, file_paths=[str(f)]
     )
 
     assert result.dry_run is True
@@ -453,9 +462,16 @@ def test_submit_assignment_for_file_real_run_uploads_then_saves_submission(mock_
     content = b"%PDF-1.4 fake pdf content"
     f.write_bytes(content)
 
-    submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+    submit_assignment_for(
+        mock_client, headers=None, course_id=5968, assignment_id=4975, file_paths=[str(f)]
+    )
     result = submit_assignment_for(
-        mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)], dry_run=False
+        mock_client,
+        headers=None,
+        course_id=5968,
+        assignment_id=4975,
+        file_paths=[str(f)],
+        dry_run=False,
     )
 
     assert result.executed is True
@@ -476,7 +492,9 @@ def test_submit_assignment_for_file_rejects_when_submission_type_disabled(mock_c
     f.write_bytes(b"x")
 
     with pytest.raises(PlatoMCPError, match="did not report whether"):
-        submit_assignment_for(mock_client, course_id=6253, assignment_id=1, file_paths=[str(f)])
+        submit_assignment_for(
+            mock_client, headers=None, course_id=6253, assignment_id=1, file_paths=[str(f)]
+        )
 
 
 def test_submit_assignment_for_file_rejects_too_many_files(mock_client, tmp_path):
@@ -490,7 +508,9 @@ def test_submit_assignment_for_file_rejects_too_many_files(mock_client, tmp_path
         paths.append(str(f))
 
     with pytest.raises(PlatoMCPError, match="at most 2"):
-        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=paths)
+        submit_assignment_for(
+            mock_client, headers=None, course_id=5968, assignment_id=4975, file_paths=paths
+        )
 
 
 def test_submit_assignment_for_file_rejects_oversized_file(mock_client, tmp_path):
@@ -501,7 +521,9 @@ def test_submit_assignment_for_file_rejects_oversized_file(mock_client, tmp_path
     f.write_bytes(b"x" * 2000)  # max_size_bytes is 1000 in the fixture
 
     with pytest.raises(PlatoMCPError, match="exceeding"):
-        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+        submit_assignment_for(
+            mock_client, headers=None, course_id=5968, assignment_id=4975, file_paths=[str(f)]
+        )
 
 
 def test_submit_assignment_for_file_rejects_disallowed_extension(mock_client, tmp_path):
@@ -512,7 +534,9 @@ def test_submit_assignment_for_file_rejects_disallowed_extension(mock_client, tm
     f.write_bytes(b"x")
 
     with pytest.raises(PlatoMCPError, match="not allowed"):
-        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975, file_paths=[str(f)])
+        submit_assignment_for(
+            mock_client, headers=None, course_id=5968, assignment_id=4975, file_paths=[str(f)]
+        )
 
 
 def test_submit_assignment_for_file_rejects_missing_file(mock_client):
@@ -522,13 +546,251 @@ def test_submit_assignment_for_file_rejects_missing_file(mock_client):
 
     with pytest.raises(PlatoMCPError, match="not found"):
         submit_assignment_for(
-            mock_client, course_id=5968, assignment_id=4975, file_paths=["/no/such/file.pdf"]
+            mock_client,
+            headers=None,
+            course_id=5968,
+            assignment_id=4975,
+            file_paths=["/no/such/file.pdf"],
         )
 
 
 def test_submit_assignment_for_requires_text_or_files(mock_client):
     with pytest.raises(PlatoMCPError, match="empty submission"):
-        submit_assignment_for(mock_client, course_id=5968, assignment_id=4975)
+        submit_assignment_for(mock_client, headers=None, course_id=5968, assignment_id=4975)
+
+
+# ---------------------------------------------------------------------------
+# Remote-transport upload path (issue #153) -- headers is a Mapping (not
+# None) under streamable-http, the same convention test_downloads_tool.py
+# uses for download_course_file_tool_for.
+# ---------------------------------------------------------------------------
+
+_REMOTE_HEADERS = {"pnu_id": "u", "pnu_password": "p"}
+
+
+def _b64(content: bytes) -> str:
+    return base64.b64encode(content).decode("ascii")
+
+
+def test_submit_assignment_for_remote_file_paths_rejected_with_clear_error(mock_client, tmp_path):
+    f = tmp_path / "report.pdf"
+    f.write_bytes(b"x")
+
+    with pytest.raises(PlatoMCPError, match="file_paths is only supported over stdio"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_paths=[str(f)],
+        )
+    mock_client.call.assert_not_called()  # fails before even looking up the assignment
+
+
+def test_submit_assignment_for_stdio_file_contents_also_allowed(mock_client):
+    """file_contents isn't remote-only -- there's no technical reason to
+    refuse it locally, it's simply the only option remotely (issue #153)."""
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="report.pdf", content_base64=_b64(b"%PDF-1.4 fake"))
+
+    result = submit_assignment_for(
+        mock_client,
+        headers=None,
+        course_id=5968,
+        assignment_id=4975,
+        file_contents=[upload],
+    )
+
+    assert result.dry_run is True
+    mock_client.upload_file.assert_not_called()
+
+
+def test_submit_assignment_for_remote_file_contents_dry_run_previews_without_uploading(
+    mock_client,
+):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="report.pdf", content_base64=_b64(b"%PDF-1.4 fake"))
+
+    result = submit_assignment_for(
+        mock_client,
+        headers=_REMOTE_HEADERS,
+        course_id=5968,
+        assignment_id=4975,
+        file_contents=[upload],
+    )
+
+    assert result.dry_run is True
+    assert result.preview["file_contents"] == [
+        {"filename": "report.pdf", "sha256": hashlib.sha256(b"%PDF-1.4 fake").hexdigest()}
+    ]
+    mock_client.upload_file.assert_not_called()
+    mock_client.get_unused_draft_itemid.assert_not_called()
+
+
+def test_submit_assignment_for_remote_file_contents_real_run_uploads_then_saves_submission(
+    mock_client,
+):
+    def fake_call(fn, **kw):
+        if fn == "mod_assign_get_assignments":
+            return {"courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]}
+        if fn == "mod_assign_save_submission":
+            return []
+        raise AssertionError(f"unexpected call: {fn}")
+
+    mock_client.call.side_effect = fake_call
+    mock_client.get_unused_draft_itemid.return_value = 999
+    content = b"%PDF-1.4 fake pdf content"
+    upload = InlineFileUpload(filename="report.pdf", content_base64=_b64(content))
+
+    submit_assignment_for(
+        mock_client,
+        headers=_REMOTE_HEADERS,
+        course_id=5968,
+        assignment_id=4975,
+        file_contents=[upload],
+    )
+    result = submit_assignment_for(
+        mock_client,
+        headers=_REMOTE_HEADERS,
+        course_id=5968,
+        assignment_id=4975,
+        file_contents=[upload],
+        dry_run=False,
+    )
+
+    assert result.executed is True
+    mock_client.get_unused_draft_itemid.assert_called_once()
+    mock_client.upload_file.assert_called_once_with(999, "report.pdf", content)
+    save_call = next(
+        c for c in mock_client.call.call_args_list if c.args[0] == "mod_assign_save_submission"
+    )
+    assert save_call.kwargs["plugindata[files_filemanager]"] == 999
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_too_many_files(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    uploads = [
+        InlineFileUpload(filename=f"f{i}.pdf", content_base64=_b64(b"x")) for i in range(3)
+    ]  # max_files is 2 in the fixture
+
+    with pytest.raises(PlatoMCPError, match="at most 2"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=uploads,
+        )
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_assignment_oversized_file(
+    mock_client,
+):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(
+        filename="big.pdf", content_base64=_b64(b"x" * 2000)
+    )  # max_size_bytes is 1000 in the fixture
+
+    with pytest.raises(PlatoMCPError, match="exceeding"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=[upload],
+        )
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_inline_cap(mock_client, mocker):
+    # Patch the assignment's own max_size_bytes out of the way so only the
+    # inline-upload cap (not the Moodle-side one) is exercised -- and shrink
+    # that cap so the test doesn't need to allocate real megabytes.
+    mocker.patch("plato_mcp.tools.assignments.INLINE_UPLOAD_MAX_MB", 0.00001)  # ~10 bytes
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="report.pdf", content_base64=_b64(b"x" * 500))
+
+    with pytest.raises(PlatoMCPError, match="inline-upload cap"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=[upload],
+        )
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_disallowed_extension(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="script.exe", content_base64=_b64(b"x"))
+
+    with pytest.raises(PlatoMCPError, match="not allowed"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=[upload],
+        )
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_invalid_base64(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="report.pdf", content_base64="not-valid-base64!!")
+
+    with pytest.raises(PlatoMCPError, match="not valid base64"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=[upload],
+        )
+
+
+def test_submit_assignment_for_remote_file_contents_rejects_path_traversal_filename(mock_client):
+    mock_client.call.return_value = {
+        "courses": [{"id": 5968, "assignments": [_REAL_FILE_SUBMISSION_ASSIGNMENT]}]
+    }
+    upload = InlineFileUpload(filename="../../etc/passwd", content_base64=_b64(b"x"))
+
+    with pytest.raises(PlatoMCPError, match="path separators"):
+        submit_assignment_for(
+            mock_client,
+            headers=_REMOTE_HEADERS,
+            course_id=5968,
+            assignment_id=4975,
+            file_contents=[upload],
+        )
+
+
+def test_submit_assignment_for_rejects_both_file_paths_and_file_contents(mock_client, tmp_path):
+    f = tmp_path / "report.pdf"
+    f.write_bytes(b"x")
+    upload = InlineFileUpload(filename="report.pdf", content_base64=_b64(b"x"))
+
+    with pytest.raises(PlatoMCPError, match="not both"):
+        submit_assignment_for(
+            mock_client,
+            headers=None,
+            course_id=5968,
+            assignment_id=4975,
+            file_paths=[str(f)],
+            file_contents=[upload],
+        )
 
 
 def test_assignment_summary_file_submission_computed_field_from_real_configs():

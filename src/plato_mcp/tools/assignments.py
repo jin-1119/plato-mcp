@@ -1,5 +1,6 @@
 """Tools: list_assignments, get_assignment_detail (issue #14), submit_assignment (issue #25,
-file-submission support added in issue #84), remove_submission (issue #100).
+file-submission support added in issue #84, remote-transport upload added in issue #153),
+remove_submission (issue #100).
 
 Issue #100 audited the rest of the mod_assign student-side function family
 against the real assignment (id 4975, course 5968):
@@ -15,12 +16,17 @@ against the real assignment (id 4975, course 5968):
   the page in their browser, and plato-mcp should not pretend otherwise.
 """
 
+import base64
+import binascii
+import hashlib
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
 from mcp.server.mcpserver import Context
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from plato_mcp.context import get_client, get_userid
 from plato_mcp.errors import PlatoMCPError
@@ -57,9 +63,88 @@ FORMAT_PLAIN = 2
 # empty -- "no restriction" -- so without our own floor, an AI caller could
 # upload anything, including an executable).
 DEFAULT_ALLOWED_UPLOAD_EXTENSIONS = {
-    ".pdf", ".ppt", ".pptx", ".doc", ".docx", ".xls", ".xlsx",
-    ".hwp", ".zip", ".txt", ".png", ".jpg", ".jpeg", ".gif",
+    ".pdf",
+    ".ppt",
+    ".pptx",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".hwp",
+    ".zip",
+    ".txt",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
 }
+
+# Separate from any assignment-specific max_size_bytes (a Moodle-side setting):
+# this caps how much base64-inflated payload a single remote-transport upload
+# can push through a tool call/MCP context at all (issue #153). Mirrors the
+# role files.py's INLINE_BASE64_MAX_MB plays for downloads, but kept as its
+# own constant -- the two numbers mean different things and aren't coupled.
+INLINE_UPLOAD_MAX_MB = 5
+
+
+class InlineFileUpload(BaseModel):
+    """One file's content, handed to the server directly over remote
+    (streamable-http) transport -- there's no local filesystem for the
+    server to read from there, so the client must send the bytes itself
+    (issue #153). The upload-direction counterpart to files.py's
+    DownloadContentResult."""
+
+    filename: str
+    content_base64: str
+
+
+@dataclass
+class _PendingUpload:
+    """A file ready to upload, normalized from either transport so the rest
+    of submit_assignment_for (validation, then the actual upload) never has
+    to branch on where the bytes came from.
+
+    `read` is a callable rather than plain `bytes` so the stdio path can
+    keep its existing lazy-read behavior -- dry_run only needs the file's
+    size (via `stat()`), not its content, so the preview path never reads a
+    file's bytes off disk. For the remote path the bytes are already in
+    memory by this point, so `read` is just a closure over them.
+    """
+
+    filename: str
+    size_bytes: int
+    read: Callable[[], bytes]
+
+
+def _pending_uploads_from_paths(file_paths: list[str]) -> list[_PendingUpload]:
+    uploads: list[_PendingUpload] = []
+    for raw_path in file_paths:
+        path = Path(raw_path)
+        if not path.is_file():
+            raise PlatoMCPError(f"File not found: {raw_path!r}")
+        uploads.append(_PendingUpload(path.name, path.stat().st_size, path.read_bytes))
+    return uploads
+
+
+def _pending_uploads_from_contents(items: list[InlineFileUpload]) -> list[_PendingUpload]:
+    uploads: list[_PendingUpload] = []
+    for item in items:
+        safe_name = Path(item.filename).name
+        if not safe_name or safe_name != item.filename:
+            raise PlatoMCPError(
+                f"filename must be a plain file name with no path separators: {item.filename!r}"
+            )
+        try:
+            data = base64.b64decode(item.content_base64, validate=True)
+        except binascii.Error:
+            raise PlatoMCPError(f"content_base64 for {safe_name!r} is not valid base64.") from None
+        if len(data) > INLINE_UPLOAD_MAX_MB * 1024 * 1024:
+            raise PlatoMCPError(
+                f"File {safe_name!r} is {len(data)} bytes, exceeding the "
+                f"{INLINE_UPLOAD_MAX_MB}MB inline-upload cap for remote transport."
+            )
+        uploads.append(_PendingUpload(safe_name, len(data), (lambda d=data: d)))
+    return uploads
 
 
 def list_assignments_for(client: MoodleClient, course_ids: list[int]) -> list[AssignmentSummary]:
@@ -130,9 +215,11 @@ def get_assignment_detail_for(
     )
 
 
-def _validate_file_paths(match: AssignmentSummary, file_paths: list[str]) -> list[Path]:
-    """Check file_paths against this assignment's real, live-fetched
-    submission-plugin config (issue #84) before anything is uploaded.
+def _check_upload_rules(match: AssignmentSummary, uploads: list[_PendingUpload]) -> None:
+    """Check pending uploads against this assignment's real, live-fetched
+    submission-plugin config (issue #84), regardless of which transport they
+    came from (issue #153 unified file_paths and file_contents onto the same
+    _PendingUpload shape so this validation can't drift between the two).
     Raises PlatoMCPError with a specific reason on any violation."""
     file_cfg = match.file_submission
     if not file_cfg.known:
@@ -146,12 +233,12 @@ def _validate_file_paths(match: AssignmentSummary, file_paths: list[str]) -> lis
         raise PlatoMCPError(
             f"Assignment '{match.name}' does not accept file submissions "
             "(assignsubmission_file is disabled for it) -- use text instead, "
-            "or omit file_paths."
+            "or omit file_paths/file_contents."
         )
-    if file_cfg.max_files is not None and len(file_paths) > file_cfg.max_files:
+    if file_cfg.max_files is not None and len(uploads) > file_cfg.max_files:
         raise PlatoMCPError(
             f"Assignment '{match.name}' allows at most {file_cfg.max_files} "
-            f"file(s); {len(file_paths)} were given."
+            f"file(s); {len(uploads)} were given."
         )
 
     allowed_extensions = (
@@ -160,32 +247,28 @@ def _validate_file_paths(match: AssignmentSummary, file_paths: list[str]) -> lis
         else DEFAULT_ALLOWED_UPLOAD_EXTENSIONS
     )
 
-    resolved: list[Path] = []
-    for raw_path in file_paths:
-        path = Path(raw_path)
-        if not path.is_file():
-            raise PlatoMCPError(f"File not found: {raw_path!r}")
-        if path.suffix.lower() not in allowed_extensions:
+    for upload in uploads:
+        ext = Path(upload.filename).suffix.lower()
+        if ext not in allowed_extensions:
             raise PlatoMCPError(
-                f"File extension {path.suffix!r} not allowed for this assignment "
+                f"File extension {ext!r} not allowed for this assignment "
                 f"(allowed: {sorted(allowed_extensions)})."
             )
-        size = path.stat().st_size
-        if file_cfg.max_size_bytes is not None and size > file_cfg.max_size_bytes:
+        if file_cfg.max_size_bytes is not None and upload.size_bytes > file_cfg.max_size_bytes:
             raise PlatoMCPError(
-                f"File {raw_path!r} is {size} bytes, exceeding this assignment's "
-                f"max_size_bytes={file_cfg.max_size_bytes}."
+                f"File {upload.filename!r} is {upload.size_bytes} bytes, exceeding "
+                f"this assignment's max_size_bytes={file_cfg.max_size_bytes}."
             )
-        resolved.append(path)
-    return resolved
 
 
 def submit_assignment_for(
     client: MoodleClient,
+    headers: Mapping[str, str] | None,
     course_id: int,
     assignment_id: int,
     text: str = "",
     file_paths: list[str] | None = None,
+    file_contents: list[InlineFileUpload] | None = None,
     dry_run: bool = True,
 ) -> WriteResult:
     """Submit text and/or file content for an assignment (see
@@ -200,29 +283,52 @@ def submit_assignment_for(
     confirmed live end-to-end (including the actual assignment) as part of
     this issue's verification.
 
-    Only the stdio transport (local file paths) is supported here -- under
-    streamable-http (remote/Smithery) there is no local filesystem for
-    file_paths to point at. That mirrors download_course_file's own
-    stdio-vs-remote split (issue #55); the remote-transport upload story
-    (e.g. accepting inline base64 content instead of a path) is deliberately
-    deferred to a follow-up rather than guessed at here.
+    Transport determines whether `file_paths` is usable (issue #153, mirroring
+    download_course_file's stdio-vs-remote split from issue #55, detected the
+    same way via `headers is None`):
+      - stdio (Claude Code/Desktop): the server runs on the user's own
+        machine, so `file_paths` (local filesystem paths) works.
+      - streamable-http (Smithery/remote): the server's disk is not the end
+        user's, so `file_paths` is rejected with a clear transport error
+        instead of a misleading "File not found".
+    `file_contents` (filename + base64-encoded bytes) works over *either*
+    transport -- there's no reason to refuse it locally, it's simply the only
+    option remotely -- capped at INLINE_UPLOAD_MAX_MB per file.
 
     dry_run=False is only allowed after a matching dry_run=True preview (same
-    session, course_id, assignment_id, text, and file_paths) -- see
-    write_tools.PreviewTracker (issue #37). This is enforced server-side, not
-    just a docstring convention.
+    session, course_id, assignment_id, text, file_paths, and file_contents) --
+    see write_tools.PreviewTracker (issue #37). This is enforced server-side,
+    not just a docstring convention. The preview/confirm matching key for
+    file_contents uses each file's sha256 (not its raw base64) so a multi-MB
+    upload's bytes never have to be echoed back in the preview response or
+    re-hashed by the caller.
     """
-    if not text and not file_paths:
-        raise PlatoMCPError("Provide text and/or file_paths -- an empty submission is not valid.")
+    if not text and not file_paths and not file_contents:
+        raise PlatoMCPError(
+            "Provide text, file_paths, and/or file_contents -- an empty submission is not valid."
+        )
+    if file_paths and file_contents:
+        raise PlatoMCPError("Provide file_paths or file_contents, not both.")
+
+    if headers is not None and file_paths:
+        raise PlatoMCPError(
+            "file_paths is only supported over stdio (local) transport -- this "
+            "connection is remote, so there's no local filesystem for a path to "
+            "point at. Use file_contents (filename + base64-encoded bytes) instead."
+        )
 
     assignments = list_assignments_for(client, [course_id])
     match = next((a for a in assignments if a.id == assignment_id), None)
     if match is None:
         raise ValueError(f"Assignment {assignment_id} not found in course {course_id}")
 
-    resolved_paths: list[Path] = []
+    uploads: list[_PendingUpload] = []
     if file_paths:
-        resolved_paths = _validate_file_paths(match, file_paths)
+        uploads = _pending_uploads_from_paths(file_paths)
+    elif file_contents:
+        uploads = _pending_uploads_from_contents(file_contents)
+    if uploads:
+        _check_upload_rules(match, uploads)
 
     # Fail-open here, unlike the file-submission check above: text submission
     # predates issue #84 and has always been sent unconditionally, so only
@@ -233,8 +339,8 @@ def submit_assignment_for(
     if text and text_cfg.known and not text_cfg.enabled:
         raise PlatoMCPError(
             f"Assignment '{match.name}' does not accept online text submissions "
-            "(assignsubmission_onlinetext is disabled for it) -- use file_paths instead, "
-            "or omit text."
+            "(assignsubmission_onlinetext is disabled for it) -- use file_paths/"
+            "file_contents instead, or omit text."
         )
 
     action_params = {
@@ -242,13 +348,20 @@ def submit_assignment_for(
         "assignment_id": assignment_id,
         "text": text,
         "file_paths": sorted(file_paths) if file_paths else [],
+        "file_contents": sorted(
+            (
+                {"filename": u.filename, "sha256": hashlib.sha256(u.read()).hexdigest()}
+                for u in (uploads if file_contents else [])
+            ),
+            key=lambda d: d["filename"],
+        ),
     }
     preview = {
         **action_params,
         "assignment_name": match.name,
         "due_date": match.duedate.isoformat() if match.duedate else None,
         "cutoff_date": match.cutoffdate.isoformat() if match.cutoffdate else None,
-        "file_sizes_bytes": {p.name: p.stat().st_size for p in resolved_paths},
+        "file_sizes_bytes": {u.filename: u.size_bytes for u in uploads},
     }
 
     if dry_run:
@@ -270,10 +383,10 @@ def submit_assignment_for(
                 "plugindata[onlinetext_editor][itemid]": 0,
             }
         )
-    if resolved_paths:
+    if uploads:
         itemid = client.get_unused_draft_itemid()
-        for path in resolved_paths:
-            client.upload_file(itemid, path.name, path.read_bytes())
+        for upload in uploads:
+            client.upload_file(itemid, upload.filename, upload.read())
         plugindata["plugindata[files_filemanager]"] = itemid
 
     client.call("mod_assign_save_submission", assignmentid=assignment_id, **plugindata)
@@ -362,11 +475,24 @@ def register(mcp) -> None:
             list[str] | None,
             Field(
                 description="Local filesystem paths to upload as file attachments. Only "
-                "works when this server is running locally (stdio) -- not supported over "
-                "a remote/streamable-http connection. Rejected if this assignment doesn't "
-                "accept file submissions, exceeds its max file count/size, or uses a "
-                "disallowed extension -- check get_assignment_detail's file_submission "
-                "(enabled/max_files/max_size_bytes/allowed_extensions) first."
+                "works when this server is running locally (stdio) -- rejected with a clear "
+                "error over a remote/streamable-http connection (use file_contents there "
+                "instead). Rejected if this assignment doesn't accept file submissions, "
+                "exceeds its max file count/size, or uses a disallowed extension -- check "
+                "get_assignment_detail's file_submission (enabled/max_files/max_size_bytes/"
+                "allowed_extensions) first."
+            ),
+        ] = None,
+        file_contents: Annotated[
+            list[InlineFileUpload] | None,
+            Field(
+                description="File attachments as {filename, content_base64} -- works over "
+                "either transport, and is the only way to attach files when this server is "
+                "running remotely (streamable-http), since it has no local filesystem to "
+                "read a path from there. Each file is capped at "
+                f"{INLINE_UPLOAD_MAX_MB}MB decoded, in addition to this assignment's own "
+                "max file count/size/extension rules (see get_assignment_detail's "
+                "file_submission)."
             ),
         ] = None,
         dry_run: Annotated[
@@ -380,12 +506,26 @@ def register(mcp) -> None:
         """Submit text and/or file attachments for an assignment. IRREVERSIBLE once dry_run=False.
 
         Call with dry_run=True (default) first, show the preview to the user, and
-        only call again with dry_run=False (same text/file_paths) after they
-        explicitly confirm. Provide text, file_paths, or both -- whichever this
+        only call again with dry_run=False (same parameters) after they explicitly
+        confirm. Provide text, file_paths/file_contents, or both -- whichever this
         assignment actually accepts (see get_assignment_detail).
+
+        file_paths works only when this server is running locally (stdio, e.g.
+        Claude Code/Desktop) -- rejected with a clear error over a remote
+        (streamable-http, e.g. a Claude.ai Connector) connection, mirroring
+        download_course_file's own stdio-vs-remote split. file_contents works
+        over either transport and is the only option remotely, since this
+        server's disk is not reachable by you there.
         """
         return submit_assignment_for(
-            get_client(ctx), course_id, assignment_id, text, file_paths, dry_run
+            get_client(ctx),
+            ctx.headers,
+            course_id,
+            assignment_id,
+            text,
+            file_paths,
+            file_contents,
+            dry_run,
         )
 
     @mcp.tool(annotations=WRITE_TOOL_ANNOTATIONS)
