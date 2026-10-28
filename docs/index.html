@@ -162,6 +162,39 @@
   }
   .tab-btn[aria-selected="true"] { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
 
+  .web-fields { display: grid; gap: 12px; }
+  .web-fields[hidden] { display: none; }
+  .copy-row label { display: block; font-size: .78rem; color: var(--text-dim); margin-bottom: 5px; }
+  .copy-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 10px 10px 14px;
+  }
+  .copy-field code {
+    flex: 1;
+    background: none;
+    padding: 0;
+    font-size: .88rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .copy-btn-sm {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .copy-btn-sm:hover { opacity: .88; }
+
   .snippet-wrap { position: relative; }
   .copy-btn {
     position: absolute;
@@ -302,7 +335,31 @@
         <button class="tab-btn" data-tab="json" role="tab" aria-selected="false">기타 (JSON 설정)</button>
       </div>
 
-      <div class="snippet-wrap">
+      <div class="web-fields" id="webFields" hidden>
+        <div class="copy-row">
+          <label>URL</label>
+          <div class="copy-field">
+            <code id="webUrlOut"></code>
+            <button class="copy-btn-sm" data-copy-target="webUrlOut">복사</button>
+          </div>
+        </div>
+        <div class="copy-row">
+          <label>헤더 이름 <code>pnu_id</code>의 값</label>
+          <div class="copy-field">
+            <code id="webIdOut"></code>
+            <button class="copy-btn-sm" data-copy-target="webIdOut">복사</button>
+          </div>
+        </div>
+        <div class="copy-row">
+          <label>헤더 이름 <code>pnu_password</code>의 값</label>
+          <div class="copy-field">
+            <code id="webPwOut"></code>
+            <button class="copy-btn-sm" data-copy-target="webPwOut">복사</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="snippet-wrap" id="snippetWrap">
         <button class="copy-btn" id="copyBtn">복사</button>
         <pre><code id="snippetOut"></code></pre>
       </div>
@@ -385,6 +442,11 @@
   var copyBtn = document.getElementById("copyBtn");
   var copyStatus = document.getElementById("copyStatus");
   var stepsOut = document.getElementById("stepsOut");
+  var webFields = document.getElementById("webFields");
+  var snippetWrap = document.getElementById("snippetWrap");
+  var webUrlOut = document.getElementById("webUrlOut");
+  var webIdOut = document.getElementById("webIdOut");
+  var webPwOut = document.getElementById("webPwOut");
 
   var activeTab = "web";
 
@@ -394,7 +456,7 @@
       "왼쪽 하단 또는 설정 메뉴에서 <strong>설정(Settings) → Connectors</strong>로 이동합니다.",
       "<strong>\"Add custom connector\"</strong>(커스텀 커넥터 추가) 버튼을 클릭합니다.",
       "이름은 원하는 대로 입력하고(예: <code>plato-mcp</code>), URL 칸에는 위에서 복사한 URL을 붙여넣습니다.",
-      "<strong>\"Advanced\"</strong> 또는 헤더 추가 옵션을 펼쳐서, 위에서 복사한 <code>pnu_id</code> / <code>pnu_password</code> 값을 각각 이름-값 쌍으로 입력합니다.",
+      "<strong>\"Advanced\"</strong> 또는 헤더 추가 옵션을 펼쳐서, 헤더를 2개 추가합니다. 각 헤더의 <strong>이름</strong>에는 <code>pnu_id</code> / <code>pnu_password</code>를 그대로 입력하고, <strong>값</strong>에는 위에서 복사한 값을 각각 넣습니다.",
       "저장하면 커넥터가 \"연결됨\" 상태로 바뀝니다. 새 대화를 열어 <em>\"내 PLATO 강좌 목록 보여줘\"</em>라고 물어 테스트해보세요.",
       "<span class=\"dim\">헤더 입력란이 안 보이는 클라이언트 버전이라면, 위 탭에서 Claude Code나 Codex CLI로 바꿔 진행하세요.</span>"
     ],
@@ -428,14 +490,6 @@
     var id = idInput.value.trim() || "<학번>";
     var pw = pwInput.value.trim() || "<비밀번호>";
 
-    if (activeTab === "web") {
-      return (
-        "URL:\n  " + SERVER_URL + "\n\n" +
-        "헤더:\n" +
-        "  pnu_id: " + id + "\n" +
-        "  pnu_password: " + pw
-      );
-    }
     if (activeTab === "code") {
       return (
         "claude mcp add --transport http plato-mcp " + SERVER_URL + " \\\n" +
@@ -465,9 +519,31 @@
   }
 
   function render() {
-    out.textContent = build();
+    var id = idInput.value.trim() || "<학번>";
+    var pw = pwInput.value.trim() || "<비밀번호>";
+
+    if (activeTab === "web") {
+      webFields.hidden = false;
+      snippetWrap.hidden = true;
+      webUrlOut.textContent = SERVER_URL;
+      webIdOut.textContent = id;
+      webPwOut.textContent = pw;
+    } else {
+      webFields.hidden = true;
+      snippetWrap.hidden = false;
+      out.textContent = build();
+    }
+
     stepsOut.innerHTML = steps[activeTab].map(function (s) { return "<li>" + s + "</li>"; }).join("");
     copyStatus.textContent = "";
+  }
+
+  function copyText(text, cb) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { cb(true); }, function () { cb(false); });
+    } else {
+      cb(false, true);
+    }
   }
 
   tabs.forEach(function (btn) {
@@ -486,16 +562,22 @@
   });
 
   copyBtn.addEventListener("click", function () {
-    var text = out.textContent;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        copyStatus.textContent = "복사됨";
-      }, function () {
-        copyStatus.textContent = "복사 실패 — 직접 선택해서 복사해주세요.";
-      });
-    } else {
-      copyStatus.textContent = "이 브라우저는 자동 복사를 지원하지 않습니다 — 직접 선택해서 복사해주세요.";
-    }
+    copyText(out.textContent, function (ok, unsupported) {
+      copyStatus.textContent = unsupported
+        ? "이 브라우저는 자동 복사를 지원하지 않습니다 — 직접 선택해서 복사해주세요."
+        : (ok ? "복사됨" : "복사 실패 — 직접 선택해서 복사해주세요.");
+    });
+  });
+
+  webFields.addEventListener("click", function (ev) {
+    var btn = ev.target.closest(".copy-btn-sm");
+    if (!btn) return;
+    var targetEl = document.getElementById(btn.getAttribute("data-copy-target"));
+    var original = btn.textContent;
+    copyText(targetEl.textContent, function (ok, unsupported) {
+      btn.textContent = unsupported ? "복사 불가" : (ok ? "복사됨" : "실패");
+      setTimeout(function () { btn.textContent = original; }, 1500);
+    });
   });
 
   render();
