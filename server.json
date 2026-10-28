@@ -1,0 +1,31 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jin-1119/plato-mcp",
+  "title": "PLATO MCP",
+  "description": "PLATO (Pusan National University LMS) MCP server via Moodle Web Service API + ubboard scraping",
+  "repository": {
+    "url": "https://github.com/jin-1119/plato-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://plato-mcp.onrender.com/mcp",
+      "headers": [
+        {
+          "name": "pnu_id",
+          "description": "PLATO (Moodle) login ID",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "pnu_password",
+          "description": "PLATO (Moodle) login password",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
