@@ -1,5 +1,7 @@
 # plato-mcp
 
+> **🔗 [설치 가이드 페이지](https://jin-1119.github.io/plato-mcp/) — 학번/비밀번호만 입력하면 Claude.ai, Claude Code, Codex CLI용 연결 명령어를 바로 만들어 드립니다.**
+
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![Status: WIP](https://img.shields.io/badge/status-work%20in%20progress-orange)](./PLAN.md)
