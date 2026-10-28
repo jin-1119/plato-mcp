@@ -179,7 +179,30 @@
   .copy-btn:hover { opacity: .88; }
   .copy-status { font-size: .8rem; color: var(--green); margin-top: 8px; min-height: 1.2em; }
 
-  .tab-note { font-size: .82rem; color: var(--text-dim); margin: 10px 0 0; }
+  .steps { list-style: none; margin: 14px 0 0; padding: 0; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 12px;
+    font-size: .88rem;
+    color: var(--text);
+  }
+  .steps li:last-child { margin-bottom: 0; }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps li .dim { color: var(--text-dim); }
   .privacy-note {
     font-size: .82rem;
     color: var(--text-dim);
@@ -284,7 +307,9 @@
         <pre><code id="snippetOut"></code></pre>
       </div>
       <p class="copy-status" id="copyStatus"></p>
-      <p class="tab-note" id="tabNote"></p>
+
+      <h3 style="font-size:.95rem; margin:18px 0 4px;">단계별 안내</h3>
+      <ol class="steps" id="stepsOut"></ol>
 
       <div class="privacy-note">
         <strong>입력값은 서버로 전송되지 않습니다.</strong> 이 생성기는 브라우저 안에서만
@@ -359,15 +384,40 @@
   var out = document.getElementById("snippetOut");
   var copyBtn = document.getElementById("copyBtn");
   var copyStatus = document.getElementById("copyStatus");
-  var tabNote = document.getElementById("tabNote");
+  var stepsOut = document.getElementById("stepsOut");
 
   var activeTab = "web";
 
-  var notes = {
-    web: "claude.ai / Claude Desktop: 설정 → Connectors → Add custom connector → URL 입력 후, 커스텀 헤더(Advanced) 입력란에 아래 두 값을 그대로 넣으세요. 헤더 입력란이 보이지 않는 클라이언트 버전이라면 Claude Code나 Codex CLI 쪽을 권장합니다.",
-    code: "터미널에서 그대로 실행하세요. --header는 서버 이름보다 앞에 와야 합니다.",
-    codex: "~/.codex/config.toml 파일에 아래 블록을 추가하세요.",
-    json: "headers 필드를 지원하는 JSON 기반 MCP 클라이언트(예: opencode) 설정 예시입니다. 클라이언트별 정확한 파일 경로/키 이름은 해당 도구 문서를 확인하세요."
+  var steps = {
+    web: [
+      "claude.ai를 웹 브라우저로 열거나, Claude Desktop 앱을 실행합니다.",
+      "왼쪽 하단 또는 설정 메뉴에서 <strong>설정(Settings) → Connectors</strong>로 이동합니다.",
+      "<strong>\"Add custom connector\"</strong>(커스텀 커넥터 추가) 버튼을 클릭합니다.",
+      "이름은 원하는 대로 입력하고(예: <code>plato-mcp</code>), URL 칸에는 위에서 복사한 URL을 붙여넣습니다.",
+      "<strong>\"Advanced\"</strong> 또는 헤더 추가 옵션을 펼쳐서, 위에서 복사한 <code>pnu_id</code> / <code>pnu_password</code> 값을 각각 이름-값 쌍으로 입력합니다.",
+      "저장하면 커넥터가 \"연결됨\" 상태로 바뀝니다. 새 대화를 열어 <em>\"내 PLATO 강좌 목록 보여줘\"</em>라고 물어 테스트해보세요.",
+      "<span class=\"dim\">헤더 입력란이 안 보이는 클라이언트 버전이라면, 위 탭에서 Claude Code나 Codex CLI로 바꿔 진행하세요.</span>"
+    ],
+    code: [
+      "터미널(명령 프롬프트)을 엽니다.",
+      "위에서 복사한 명령어를 그대로 붙여넣고 Enter를 누릅니다.",
+      "<code>claude mcp list</code> 명령으로 <code>plato-mcp</code>가 목록에 뜨는지 확인합니다.",
+      "Claude Code에서 새 세션을 시작하고 <em>\"plato-mcp로 내 강좌 목록 보여줘\"</em>라고 물어 테스트합니다.",
+      "<span class=\"dim\">연결이 안 되면 <code>claude mcp get plato-mcp</code>로 설정이 제대로 들어갔는지 확인하세요.</span>"
+    ],
+    codex: [
+      "텍스트 에디터로 <code>~/.codex/config.toml</code> 파일을 엽니다 (없으면 새로 만듭니다).",
+      "위에서 복사한 블록을 파일 맨 끝에 붙여넣고 저장합니다.",
+      "Codex CLI를 재시작합니다.",
+      "새 세션에서 <em>\"plato-mcp로 내 강좌 목록 보여줘\"</em>라고 물어 테스트합니다."
+    ],
+    json: [
+      "사용 중인 클라이언트의 MCP 설정 파일 위치를 확인합니다 (도구 문서에서 \"remote / http / url\" 타입 서버 등록 방법 검색).",
+      "위에서 복사한 블록을 그 설정 파일의 <code>mcpServers</code>(클라이언트에 따라 키 이름이 다를 수 있음) 안에 병합합니다.",
+      "클라이언트를 재시작하거나 MCP 서버 목록을 새로고침합니다.",
+      "도구 목록에 plato-mcp의 도구들이 보이는지 확인한 뒤 테스트 질문을 보냅니다.",
+      "<span class=\"dim\">이 방식은 URL에 자격증명이 남지 않는 <code>headers</code> 필드를 쓰는 클라이언트 기준입니다 — 쿼리 파라미터 방식만 지원하는 클라이언트는 로그에 비밀번호가 남을 수 있어 비권장입니다.</span>"
+    ]
   };
 
   function esc(v) {
@@ -416,7 +466,7 @@
 
   function render() {
     out.textContent = build();
-    tabNote.textContent = notes[activeTab];
+    stepsOut.innerHTML = steps[activeTab].map(function (s) { return "<li>" + s + "</li>"; }).join("");
     copyStatus.textContent = "";
   }
 
