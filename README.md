@@ -11,7 +11,7 @@
 강좌 자료·공지·과제·성적·Q&A를 조회·작성·다운로드할 수 있게 해 줍니다.
 
 > **아직 개발 중입니다.** 전체 구현 계획은 [`PLAN.md`](./PLAN.md)를, 현재 진행 상황은
-> [GitHub Issues](https://github.com/jin-1119/plato_mcp/issues) /
+> [GitHub Issues](https://github.com/jin-1119/plato-mcp/issues) /
 > [Project 보드](https://github.com/users/jin-1119/projects/1)를 참고하세요.
 
 > **이 서버는 새로운 권한을 부여하지 않습니다.** 여러분의 PLATO 학번·비밀번호로 인증하며,
@@ -28,17 +28,28 @@
 
 ### 일반 사용자 — 그냥 써보고 싶다면
 
-코드를 내려받거나 서버를 직접 실행할 필요가 없습니다. [Smithery
-마켓플레이스](https://smithery.ai/servers/jinyeonggim844/plato-mcp)에 배포되어
-있어, 지원되는 MCP 클라이언트(Claude.ai, Claude Desktop, Claude Code 등)에서 바로
-연결할 수 있습니다.
+코드를 내려받거나 서버를 직접 실행할 필요가 없습니다. 이 서버는 공식
+[MCP Registry](https://registry.modelcontextprotocol.io)에
+`io.github.jin-1119/plato-mcp`로 등록되어 있고, 실제 주소는
+`https://plato-mcp.onrender.com/mcp`(Streamable HTTP)입니다.
 
-1. [Smithery의 plato-mcp 페이지](https://smithery.ai/servers/jinyeonggim844/plato-mcp)로 이동합니다.
-2. 사용 중인 MCP 클라이언트에 맞는 설치/연결 버튼을 따라갑니다.
-3. 연결 시 PLATO 학번과 비밀번호를 입력합니다. 이 값은 **서버 디스크에 저장되지
-   않으며**, 요청을 처리하는 동안만 메모리에 존재합니다 — 자세한 내용은
-   [`SECURITY.md`](./SECURITY.md)를 확인하세요.
-4. 연결되면 AI 어시스턴트에게 자연어로 요청하면 됩니다. 예:
+> Smithery 마켓플레이스는 더 이상 쓰지 않습니다 — Smithery가 신규 외부 서버
+> 등록을 막고 2026-10-31에 전체 서비스를 종료하면서, 공식 레지스트리로
+> 옮겼습니다. 자세한 배경은 [`docs/smithery_deployment_model.md`](./docs/smithery_deployment_model.md)를
+> 참고하세요.
+
+1. 사용 중인 MCP 클라이언트에서 아래 주소를 **원격(remote) MCP 서버**로
+   추가합니다:
+   - **Claude.ai / Claude Desktop**: 설정 → Connectors → Add custom
+     connector → URL에 `https://plato-mcp.onrender.com/mcp` 입력.
+   - **Claude Code**: `claude mcp add --transport http plato-mcp https://plato-mcp.onrender.com/mcp`
+   - MCP Registry를 직접 검색할 수 있는 클라이언트라면 `io.github.jin-1119/plato-mcp`로
+     찾아도 됩니다.
+2. 연결 시 PLATO 학번과 비밀번호를 (클라이언트가 지원하는 경우) 커넥터 설정
+   값으로, 아니면 헤더/쿼리 파라미터(`pnu_id`, `pnu_password`)로 입력합니다.
+   이 값은 **서버 디스크에 저장되지 않으며**, 요청을 처리하는 동안만 메모리에
+   존재합니다 — 자세한 내용은 [`SECURITY.md`](./SECURITY.md)를 확인하세요.
+3. 연결되면 AI 어시스턴트에게 자연어로 요청하면 됩니다. 예:
    - "이번 주에 제출해야 할 과제가 뭐가 있어?"
    - "이번 학기 성적 알려줘"
    - "OO 과목 3주차 강의자료 다운로드해줘"

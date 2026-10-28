@@ -1,3 +1,9 @@
+# DEPRECATED: unused since issue #157. Smithery blocks new external-server
+# registrations and is shutting down entirely on 2026-10-31; this project now
+# publishes to the official MCP Registry (see server.json) and hosts on
+# Render. Kept only as historical documentation of the config schema fields
+# (pnu_id/pnu_password/request_timeout_seconds/max_download_mb) -- nothing in
+# the current publish flow reads this file.
 runtime: "container"
 build:
   dockerfile: "Dockerfile"

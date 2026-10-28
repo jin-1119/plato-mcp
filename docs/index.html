@@ -347,18 +347,18 @@
   <div class="wrap">
     <h2><span class="num">02</span> 설치 / 사용 방법</h2>
     <p class="section-sub">
-      일반 사용자는 Smithery를 통해 설치하고, 코드를 직접 수정/실행하려는 개발자는
-      로컬 클론 경로를 따라가세요.
+      일반 사용자는 공식 MCP Registry에 등록된 원격 서버 주소를 바로 추가하고,
+      코드를 직접 수정/실행하려는 개발자는 로컬 클론 경로를 따라가세요.
     </p>
 
     <div class="install-tabs">
       <div class="install-card">
-        <h3>Smithery로 설치 (일반 사용자)</h3>
-        <p class="hint">Claude Desktop, Claude Code, Claude.ai 커넥터 등에서 바로 추가할 수 있습니다.</p>
+        <h3>원격 서버로 설치 (일반 사용자)</h3>
+        <p class="hint">Claude Desktop, Claude Code, Claude.ai 커넥터 등에서 바로 추가할 수 있습니다. 공식 <a href="https://registry.modelcontextprotocol.io">MCP Registry</a>에 <code>io.github.jin-1119/plato-mcp</code>로 등록되어 있습니다.</p>
         <ol class="steps">
-          <li><a href="https://smithery.ai/servers/jinyeonggim844/plato-mcp">smithery.ai의 plato-mcp 페이지</a>에 접속합니다.</li>
-          <li><strong>Add to toolbox</strong> 또는 <strong>Install</strong>을 눌러 원하는 클라이언트(Claude Desktop/Code/CLI 등)를 선택합니다.</li>
-          <li>설정 화면에서 PLATO 학번(<code>pnu_id</code>)과 비밀번호(<code>pnu_password</code>)를 입력합니다 — 이 값은 세션 동안만 사용되고 서버 디스크에 저장되지 않습니다.</li>
+          <li><strong>Claude.ai / Claude Desktop</strong>: 설정 → Connectors → Add custom connector → URL에 <code>https://plato-mcp.onrender.com/mcp</code> 입력.</li>
+          <li><strong>Claude Code</strong>: <code>claude mcp add --transport http plato-mcp https://plato-mcp.onrender.com/mcp</code></li>
+          <li>연결 설정 화면(또는 헤더/쿼리 파라미터)에서 PLATO 학번(<code>pnu_id</code>)과 비밀번호(<code>pnu_password</code>)를 입력합니다 — 이 값은 세션 동안만 사용되고 서버 디스크에 저장되지 않습니다.</li>
           <li>연결 후 <code>list_courses</code> 같은 도구를 호출해 정상 동작하는지 확인합니다.</li>
         </ol>
         <div class="callout">
@@ -448,8 +448,8 @@ python -m plato_mcp.server</code></pre>
       <a class="link-card" href="https://github.com/users/jin-1119/projects/1">
         <span class="t">Project 보드</span><span class="d">현재 진행 상황(Status 기준)</span>
       </a>
-      <a class="link-card" href="https://smithery.ai/servers/jinyeonggim844/plato-mcp">
-        <span class="t">Smithery 리스팅</span><span class="d">설치 페이지</span>
+      <a class="link-card" href="https://registry.modelcontextprotocol.io">
+        <span class="t">공식 MCP Registry</span><span class="d">io.github.jin-1119/plato-mcp 리스팅</span>
       </a>
     </div>
   </div>

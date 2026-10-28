@@ -1,7 +1,7 @@
 # PLATO MCP — 프로젝트 계획
 
 > 부산대학교 LMS **PLATO**(https://plato.pusan.ac.kr/, Moodle 4.5.13 기반)를 다루는 MCP 서버.
-> 레포: https://github.com/jin-1119/plato_mcp
+> 레포: https://github.com/jin-1119/plato-mcp
 > Project 보드: https://github.com/users/jin-1119/projects/1
 
 ## 한눈에 보기
@@ -10,8 +10,8 @@
 |---|---|
 | 목표 | AI(Claude)가 PLATO에 직접 안 들어가도 강좌 자료·공지·과제·성적·Q&A를 조회/작성/다운로드하도록 |
 | v1 범위 | 읽기 + 쓰기(과제 제출, Q&A 글쓰기) + 파일 다운로드 **전부 포함** |
-| 배포처 | Smithery (공개 MCP 마켓플레이스) |
-| 자격증명 정책 | 서버 코드가 학번/비밀번호를 디스크에 저장하지 않음. Smithery per-user config로 주입 → 세션 메모리에서만 사용 |
+| 배포처 | Render(호스팅) + 공식 [MCP Registry](https://registry.modelcontextprotocol.io)(공개 리스팅) — Smithery는 신규 등록 차단 및 전체 셧다운(2026-10-31)으로 더 이상 쓰지 않음 |
+| 자격증명 정책 | 서버 코드가 학번/비밀번호를 디스크에 저장하지 않음. 요청별 헤더/쿼리 파라미터로 주입 → 세션 메모리에서만 사용 |
 | 언어/SDK | Python, 공식 `mcp` SDK (FastMCP) |
 
 ## 확인된 핵심 사실
@@ -28,7 +28,7 @@
 ```
 src/plato_mcp/
 ├── server.py            # FastMCP 앱, tool 등록 진입점
-├── config.py            # Smithery config 스키마 (pnu_id, pnu_password, ...)
+├── config.py            # 원격 config 스키마 (pnu_id, pnu_password, ...)
 ├── auth.py              # 세션별 wstoken + requests.Session 쿠키 in-memory 캐시
 ├── moodle_client.py     # webservice/rest/server.php 범용 REST 호출 래퍼
 ├── ubboard/
@@ -48,22 +48,22 @@ src/plato_mcp/
 
 | Phase | 부모 이슈 | 내용 | 하위 이슈 |
 |---|---|---|---|
-| 0 | [#1](https://github.com/jin-1119/plato_mcp/issues/1) | 프로젝트 부트스트랩 | [#9](https://github.com/jin-1119/plato_mcp/issues/9) 스켈레톤 · [#10](https://github.com/jin-1119/plato_mcp/issues/10) auth.py · [#11](https://github.com/jin-1119/plato_mcp/issues/11) moodle_client.py |
-| 1 | [#2](https://github.com/jin-1119/plato_mcp/issues/2) | 공식 API 읽기 도구 | [#12](https://github.com/jin-1119/plato_mcp/issues/12) list_courses · [#13](https://github.com/jin-1119/plato_mcp/issues/13) get_course_contents · [#14](https://github.com/jin-1119/plato_mcp/issues/14) assignments · [#15](https://github.com/jin-1119/plato_mcp/issues/15) grades · [#16](https://github.com/jin-1119/plato_mcp/issues/16) calendar · [#17](https://github.com/jin-1119/plato_mcp/issues/17) messages · [#18](https://github.com/jin-1119/plato_mcp/issues/18) 통합 스모크테스트 |
-| 2 | [#3](https://github.com/jin-1119/plato_mcp/issues/3) | ubboard 스크레이퍼(읽기) | [#19](https://github.com/jin-1119/plato_mcp/issues/19) 🚧HTML 구조 분석(BLOCKER) · [#20](https://github.com/jin-1119/plato_mcp/issues/20) 쿠키 로그인 · [#21](https://github.com/jin-1119/plato_mcp/issues/21) parser.py · [#22](https://github.com/jin-1119/plato_mcp/issues/22) list_notices · [#23](https://github.com/jin-1119/plato_mcp/issues/23) list_qna |
-| 3 | [#4](https://github.com/jin-1119/plato_mcp/issues/4) | 쓰기 작업 | [#24](https://github.com/jin-1119/plato_mcp/issues/24) 확인 플로우 설계 · [#25](https://github.com/jin-1119/plato_mcp/issues/25) submit_assignment · [#26](https://github.com/jin-1119/plato_mcp/issues/26) writer.py · [#27](https://github.com/jin-1119/plato_mcp/issues/27) post/reply Q&A |
-| 4 | [#5](https://github.com/jin-1119/plato_mcp/issues/5) | 파일 다운로드 | [#28](https://github.com/jin-1119/plato_mcp/issues/28) download_course_file |
-| 5 | [#6](https://github.com/jin-1119/plato_mcp/issues/6) | Smithery 배포 | [#29](https://github.com/jin-1119/plato_mcp/issues/29) 배포방식 확인 · [#30](https://github.com/jin-1119/plato_mcp/issues/30) smithery.yaml/Dockerfile · [#31](https://github.com/jin-1119/plato_mcp/issues/31) README 디스클레이머 · [#32](https://github.com/jin-1119/plato_mcp/issues/32) 공개 릴리즈 |
-| 6 | [#7](https://github.com/jin-1119/plato_mcp/issues/7) | 능동 알림 (2차, 보류) | [#33](https://github.com/jin-1119/plato_mcp/issues/33) 채널 설계 스파이크 |
-| - | [#8](https://github.com/jin-1119/plato_mcp/issues/8) | 보안/개인정보 (전체 관통) | [#34](https://github.com/jin-1119/plato_mcp/issues/34) 로그 마스킹 · [#35](https://github.com/jin-1119/plato_mcp/issues/35) rate limiting · [#36](https://github.com/jin-1119/plato_mcp/issues/36) 제3자 PII 검토 · [#37](https://github.com/jin-1119/plato_mcp/issues/37) 쓰기 도구 어뷰징 검토 |
+| 0 | [#1](https://github.com/jin-1119/plato-mcp/issues/1) | 프로젝트 부트스트랩 | [#9](https://github.com/jin-1119/plato-mcp/issues/9) 스켈레톤 · [#10](https://github.com/jin-1119/plato-mcp/issues/10) auth.py · [#11](https://github.com/jin-1119/plato-mcp/issues/11) moodle_client.py |
+| 1 | [#2](https://github.com/jin-1119/plato-mcp/issues/2) | 공식 API 읽기 도구 | [#12](https://github.com/jin-1119/plato-mcp/issues/12) list_courses · [#13](https://github.com/jin-1119/plato-mcp/issues/13) get_course_contents · [#14](https://github.com/jin-1119/plato-mcp/issues/14) assignments · [#15](https://github.com/jin-1119/plato-mcp/issues/15) grades · [#16](https://github.com/jin-1119/plato-mcp/issues/16) calendar · [#17](https://github.com/jin-1119/plato-mcp/issues/17) messages · [#18](https://github.com/jin-1119/plato-mcp/issues/18) 통합 스모크테스트 |
+| 2 | [#3](https://github.com/jin-1119/plato-mcp/issues/3) | ubboard 스크레이퍼(읽기) | [#19](https://github.com/jin-1119/plato-mcp/issues/19) 🚧HTML 구조 분석(BLOCKER) · [#20](https://github.com/jin-1119/plato-mcp/issues/20) 쿠키 로그인 · [#21](https://github.com/jin-1119/plato-mcp/issues/21) parser.py · [#22](https://github.com/jin-1119/plato-mcp/issues/22) list_notices · [#23](https://github.com/jin-1119/plato-mcp/issues/23) list_qna |
+| 3 | [#4](https://github.com/jin-1119/plato-mcp/issues/4) | 쓰기 작업 | [#24](https://github.com/jin-1119/plato-mcp/issues/24) 확인 플로우 설계 · [#25](https://github.com/jin-1119/plato-mcp/issues/25) submit_assignment · [#26](https://github.com/jin-1119/plato-mcp/issues/26) writer.py · [#27](https://github.com/jin-1119/plato-mcp/issues/27) post/reply Q&A |
+| 4 | [#5](https://github.com/jin-1119/plato-mcp/issues/5) | 파일 다운로드 | [#28](https://github.com/jin-1119/plato-mcp/issues/28) download_course_file |
+| 5 | [#6](https://github.com/jin-1119/plato-mcp/issues/6) | Smithery 배포 | [#29](https://github.com/jin-1119/plato-mcp/issues/29) 배포방식 확인 · [#30](https://github.com/jin-1119/plato-mcp/issues/30) smithery.yaml/Dockerfile · [#31](https://github.com/jin-1119/plato-mcp/issues/31) README 디스클레이머 · [#32](https://github.com/jin-1119/plato-mcp/issues/32) 공개 릴리즈 |
+| 6 | [#7](https://github.com/jin-1119/plato-mcp/issues/7) | 능동 알림 (2차, 보류) | [#33](https://github.com/jin-1119/plato-mcp/issues/33) 채널 설계 스파이크 |
+| - | [#8](https://github.com/jin-1119/plato-mcp/issues/8) | 보안/개인정보 (전체 관통) | [#34](https://github.com/jin-1119/plato-mcp/issues/34) 로그 마스킹 · [#35](https://github.com/jin-1119/plato-mcp/issues/35) rate limiting · [#36](https://github.com/jin-1119/plato-mcp/issues/36) 제3자 PII 검토 · [#37](https://github.com/jin-1119/plato-mcp/issues/37) 쓰기 도구 어뷰징 검토 |
 
 ## 지금 바로 시작 가능한 이슈 (Ready, 의존성 없음)
 
-- **[#9](https://github.com/jin-1119/plato_mcp/issues/9)** — Python 프로젝트 스켈레톤 (모든 것의 시작점)
-- **[#19](https://github.com/jin-1119/plato_mcp/issues/19)** — 🚧 `[BLOCKER]` ubboard HTML 구조 분석
-- **[#24](https://github.com/jin-1119/plato_mcp/issues/24)** — 쓰기 작업 확인 플로우 설계
-- **[#29](https://github.com/jin-1119/plato_mcp/issues/29)** — Smithery Python 배포 방식 확인
-- **[#31](https://github.com/jin-1119/plato_mcp/issues/31)** — README 디스클레이머
+- **[#9](https://github.com/jin-1119/plato-mcp/issues/9)** — Python 프로젝트 스켈레톤 (모든 것의 시작점)
+- **[#19](https://github.com/jin-1119/plato-mcp/issues/19)** — 🚧 `[BLOCKER]` ubboard HTML 구조 분석
+- **[#24](https://github.com/jin-1119/plato-mcp/issues/24)** — 쓰기 작업 확인 플로우 설계
+- **[#29](https://github.com/jin-1119/plato-mcp/issues/29)** — Smithery Python 배포 방식 확인
+- **[#31](https://github.com/jin-1119/plato-mcp/issues/31)** — README 디스클레이머
 
 ## 의존관계 요약
 
