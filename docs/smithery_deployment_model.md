@@ -474,6 +474,29 @@ session). That's a genuine redesign of how auth is wired through
 idea, not filed as a concrete issue since it would need its own
 cost/benefit look first.
 
+## Addendum (issue #157/#159): Smithery full shutdown -> official MCP Registry
+
+Smithery announced a complete shutdown of its registry API, Connect, the
+MCP proxy, and every hosted/proxied server URL (`server.smithery.ai`,
+`*.run.tools`), effective **2026-10-31**. Before that date, it had already
+started rejecting new external-server registrations via `smithery.ai/new`
+with a 403 ("Updating servers has been removed. Contact
+support@smithery.ai.") -- confirmed when attempting to register this
+project's Render-hosted URL.
+
+Smithery will remain afterward only as a non-proxied public directory
+(scraped/powered by Arcade.dev), not an onboarding path for new servers.
+
+This project now publishes to the **official MCP Registry**
+(`registry.modelcontextprotocol.io`) instead, via the `mcp-publisher` CLI
+with GitHub-based auth. See `server.json` at the repo root (the `remotes`
+entry points at the same Render URL this document's addenda already
+established) and issue #157 for the publish steps and live verification.
+Other directories (Glama, PulseMCP, mcp.so) ingest from the official
+registry automatically, so no further per-directory registration is
+needed. `smithery.yaml` is kept only as historical documentation of the
+config schema field names -- nothing in the current publish flow reads it.
+
 ## Sources
 
 - https://smithery.ai/docs/build/deployments/custom-container
