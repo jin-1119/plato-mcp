@@ -514,7 +514,7 @@
       "위에서 복사한 명령어를 그대로 붙여넣고 Enter를 누릅니다.",
       "<code>claude mcp list</code> 명령으로 <code>plato-mcp</code>가 목록에 뜨는지 확인합니다.",
       "Claude Code에서 새 세션을 시작하고 <em>\"plato-mcp로 내 강좌 목록 보여줘\"</em>라고 물어 테스트합니다.",
-      "<span class=\"dim\">연결이 안 되면 <code>claude mcp get plato-mcp</code>로 설정이 제대로 들어갔는지 확인하세요.</span>"
+      "<span class=\"dim\">이 명령은 <code>-s user</code> 옵션으로 모든 프로젝트에서 공통으로 쓰이도록 등록합니다. 연결이 안 되면 <code>claude mcp get plato-mcp</code>로 설정이 제대로 들어갔는지 확인하세요.</span>"
     ],
     codex: [
       "텍스트 에디터로 <code>~/.codex/config.toml</code> 파일을 엽니다 (없으면 새로 만듭니다).",
@@ -534,7 +534,7 @@
       "위에서 복사한 명령어를 그대로 붙여넣고 Enter를 누릅니다.",
       "<code>gemini mcp list</code> 명령으로 <code>plato-mcp</code>가 목록에 뜨는지 확인합니다.",
       "Gemini CLI에서 새 세션을 시작하고 <em>\"plato-mcp로 내 강좌 목록 보여줘\"</em>라고 물어 테스트합니다.",
-      "<span class=\"dim\">설정 파일(<code>~/.gemini/settings.json</code>)을 직접 편집해도 됩니다 — <code>mcpServers.plato-mcp.httpUrl</code>과 <code>headers</code> 필드를 쓰는 구조입니다.</span>"
+      "<span class=\"dim\">이 명령은 <code>-s user</code> 옵션으로 모든 프로젝트에서 공통으로 쓰이도록 등록합니다. 설정 파일(<code>~/.gemini/settings.json</code>)을 직접 편집해도 됩니다 — <code>mcpServers.plato-mcp.httpUrl</code>과 <code>headers</code> 필드를 쓰는 구조입니다.</span>"
     ],
     chatgpt: [
       "<span class=\"dim\">아래 URL만 그대로 쓸 수 있고, pnu_id/pnu_password를 입력할 방법은 현재 없습니다 (위 경고 참고).</span>",
@@ -560,9 +560,8 @@
 
     if (activeTab === "code") {
       return (
-        "claude mcp add --transport http plato-mcp " + SERVER_URL + " \\\n" +
-        '  --header "pnu_id: ' + id + '" \\\n' +
-        '  --header "pnu_password: ' + pw + '"'
+        "claude mcp add --transport http plato-mcp -s user " + SERVER_URL +
+        ' --header "pnu_id: ' + id + '" --header "pnu_password: ' + pw + '"'
       );
     }
     if (activeTab === "codex") {
@@ -574,9 +573,8 @@
     }
     if (activeTab === "geminicli") {
       return (
-        "gemini mcp add --transport http plato-mcp " + SERVER_URL + " \\\n" +
-        '  -H "pnu_id: ' + id + '" \\\n' +
-        '  -H "pnu_password: ' + pw + '"'
+        "gemini mcp add --transport http plato-mcp -s user " + SERVER_URL +
+        ' -H "pnu_id: ' + id + '" -H "pnu_password: ' + pw + '"'
       );
     }
     // json
